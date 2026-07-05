@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics — Reqruit IQ Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="users.html" data-page="users"><span class="nav-icon">👥</span> Users</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon">📋</span> Jobs</a>
+        <a href="analytics.html" data-page="analytics"><span class="nav-icon">📈</span> Analytics</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
+        <a href="#" id="logout-btn" class="btn btn-ghost btn-sm mt-2" style="width:100%;color:#94a3b8">Logout</a>
+      </div>
+    </aside>
+    <main class="dashboard-main">
+      <header class="dashboard-topbar"><h1>Platform Analytics</h1></header>
+      <div class="dashboard-content">
+        <div class="stats-grid" id="analytics-stats"></div>
+      </div>
+    </main>
+  </div>
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/dashboard.js"></script>
+  <script>
+    requireAuth(['admin']);
+    initSidebar('analytics');
+    api.adminStats().then((s) => {
+      document.getElementById('analytics-stats').innerHTML = `
+        <div class="stat-card"><div class="label">Avg Applications / Job</div><div class="value">${s.avgAppsPerJob || 0}</div></div>
+        <div class="stat-card"><div class="label">Analyzed Applications</div><div class="value">${s.analyzedApplications || 0}</div></div>
+        <div class="stat-card"><div class="label">Shortlisted</div><div class="value">${s.shortlistedTotal || 0}</div></div>
+        <div class="stat-card"><div class="label">Open Jobs</div><div class="value">${s.openJobs}</div></div>`;
+    });
+  </script>
+</body>
+</html>
