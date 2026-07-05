@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Candidates — Reqruit IQ</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../assets/css/interactive.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="create-job.html" data-page="create-job"><span class="nav-icon">➕</span> Post Job</a>
+        <a href="candidates.html" data-page="candidates"><span class="nav-icon">👥</span> Candidates</a>
+        <a href="shortlist.html" data-page="shortlist"><span class="nav-icon">✅</span> Shortlisting</a>
+        <a href="rankings.html" data-page="rankings"><span class="nav-icon">🏆</span> AI Rankings</a>
+        <a href="reports.html" data-page="reports"><span class="nav-icon">📈</span> Reports</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip"><div class="user-avatar" id="user-avatar">E</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
+        <a href="#" id="logout-btn" class="btn btn-ghost btn-sm mt-2" style="width:100%;color:#94a3b8">Logout</a>
+      </div>
+    </aside>
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <h1>Candidates</h1>
+        <a href="shortlist.html" class="btn btn-primary btn-sm">Open Pipeline</a>
+      </header>
+      <div class="dashboard-content">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Browse Applicants</h2>
+            <select id="job-select" class="form-control" style="max-width:300px"></select>
+          </div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <div class="search-box">
+                <input type="search" id="candidate-search" placeholder="Search by name or email..." />
+              </div>
+              <div class="filter-pills">
+                <button class="filter-pill active" data-filter="all">All</button>
+                <button class="filter-pill" data-filter="review">In Review</button>
+                <button class="filter-pill" data-filter="shortlisted">Shortlisted</button>
+                <button class="filter-pill" data-filter="interview_scheduled">Interview</button>
+                <button class="filter-pill" data-filter="rejected">Rejected</button>
+              </div>
+            </div>
+            <div id="candidates-list">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/dashboard.js"></script>
+  <script src="../scripts/employer-ui.js"></script>
+  <script>
+    requireAuth(['employer']);
+    initSidebar('candidates');
+    const jobIdParam = new URLSearchParams(window.location.search).get('job');
+    const jobSelect = document.getElementById('job-select');
+    const listEl = document.getElementById('candidates-list');
+    let allApps = [];
+
+    async function loadCandidates() {
+      const jobId = jobSelect.value;
+      if (!jobId) { listEl.innerHTML = '<p>No jobs available.</p>'; return; }
+      listEl.innerHTML = '<p>Loading...</p>';
+      try {
+        allApps = await api.jobApplications(jobId);
+        window.onCandidateUpdated = () => loadCandidates();
+        setupSearchAndFilters(allApps, listEl);
+      } catch (e) {
+        listEl.innerHTML = `<p class="alert alert-error">${e.message}</p>`;
+      }
+    }
+
+    (async () => {
+      const jobs = await api.getJobs('?mine=1');
+      jobSelect.innerHTML = jobs.map((j) => `<option value="${j.id}">${j.title}</option>`).join('');
+      if (jobIdParam) jobSelect.value = jobIdParam;
+      jobSelect.addEventListener('change', loadCandidates);
+      await loadCandidates();
+    })();
+  </script>
+</body>
+</html>
