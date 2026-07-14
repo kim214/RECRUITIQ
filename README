@@ -19,3 +19,5 @@ uvicorn api:app --reload --port 8000
 Open: **http://localhost:3001/frontend/home/index.html**
 
 See [SETUP.md](SETUP.md) for full instructions, Supabase setup, and demo accounts.
+
+See [PUSH.md](PUSH.md) if you need help pushing to GitHub.

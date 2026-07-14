@@ -4,6 +4,13 @@ __pycache__/
 *.log
 .DS_Store
 .vscode/
+
+# Secrets — never commit
 .env
+**/.env
+!.env.example
+!**/.env.example
+
+# Local runtime data
 backend/data/
 backend/uploads/
