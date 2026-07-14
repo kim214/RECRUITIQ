@@ -8,7 +8,18 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/frontend/(.*)", "dest": "/frontend/$1" },
-    { "src": "/", "dest": "/frontend/home/index.html" },
+    { "src": "/", "status": 302, "headers": { "Location": "/home/index.html" } },
+    { "src": "/home/(.*)", "dest": "/frontend/home/$1" },
+    { "src": "/employer/(.*)", "dest": "/frontend/employer/$1" },
+    { "src": "/applicant/(.*)", "dest": "/frontend/applicant/$1" },
+    { "src": "/admin/(.*)", "dest": "/frontend/admin/$1" },
+    { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
+    { "src": "/scripts/(.*)", "dest": "/frontend/scripts/$1" },
+    { "src": "/login.html", "dest": "/frontend/home/login.html" },
+    { "src": "/register.html", "dest": "/frontend/home/register.html" },
+    { "src": "/features.html", "dest": "/frontend/home/features.html" },
+    { "src": "/about.html", "dest": "/frontend/home/about.html" },
+    { "src": "/contact.html", "dest": "/frontend/home/contact.html" },
     { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
 }

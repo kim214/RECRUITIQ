@@ -45,7 +45,7 @@ async function apiRequest(path, options = {}) {
   if (res.status === 401) {
     clearAuth();
     if (!window.location.pathname.includes('login.html')) {
-      window.location.href = '../home/login.html?expired=1';
+      window.location.href = page('home/login.html?expired=1');
     }
     throw new Error('Session expired — please log in again');
   }
@@ -85,21 +85,34 @@ const api = {
   },
 };
 
+function getBasePath() {
+  // Local Express serves frontend under /frontend/
+  if (window.location.port === '3001' || window.location.pathname.startsWith('/frontend')) {
+    return '/frontend';
+  }
+  return '';
+}
+
+function page(path) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${getBasePath()}${p}`;
+}
+
 function requireAuth(roles) {
   const user = getUser();
   if (!user || !getToken()) {
-    window.location.href = '../home/login.html';
+    window.location.href = page('home/login.html');
     return;
   }
   if (roles && !roles.includes(user.role)) {
-    const dashboards = { admin: '../admin/dashboard.html', employer: '../employer/dashboard.html', applicant: '../applicant/dashboard.html' };
-    window.location.href = dashboards[user.role] || '../home/index.html';
+    const dashboards = { admin: 'admin/dashboard.html', employer: 'employer/dashboard.html', applicant: 'applicant/dashboard.html' };
+    window.location.href = page(dashboards[user.role] || 'home/index.html');
   }
 }
 
 function redirectByRole(role) {
-  const map = { admin: '../admin/dashboard.html', employer: '../employer/dashboard.html', applicant: '../applicant/dashboard.html' };
-  window.location.href = map[role] || '../home/index.html';
+  const map = { admin: 'admin/dashboard.html', employer: 'employer/dashboard.html', applicant: 'applicant/dashboard.html' };
+  window.location.href = page(map[role] || 'home/index.html');
 }
 
 function formatDate(iso) {
