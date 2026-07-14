@@ -20,4 +20,6 @@ Open: **http://localhost:3001/frontend/home/index.html**
 
 See [SETUP.md](SETUP.md) for full instructions, Supabase setup, and demo accounts.
 
+See [VERCEL.md](VERCEL.md) for deploying to Vercel.
+
 See [PUSH.md](PUSH.md) if you need help pushing to GitHub.

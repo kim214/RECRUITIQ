@@ -1,6 +1,17 @@
-const API_BASE = window.location.origin.includes('localhost') || window.location.port === '3001'
-  ? `${window.location.origin}/api`
-  : 'http://localhost:3001/api';
+function getApiBase() {
+  const { hostname, port, origin } = window.location;
+  // Same-origin when served from Express (port 3001) or Vercel
+  if (port === '3001' || hostname.includes('vercel.app') || hostname.endsWith('.vercel.app')) {
+    return `${origin}/api`;
+  }
+  // Local: frontend opened separately — point to backend
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3001/api';
+  }
+  return `${origin}/api`;
+}
+
+const API_BASE = getApiBase();
 
 function getToken() {
   return localStorage.getItem('reqruit_token');

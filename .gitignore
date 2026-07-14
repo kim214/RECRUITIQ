@@ -14,3 +14,4 @@ __pycache__/
 # Local runtime data
 backend/data/
 backend/uploads/
+.vercel
