@@ -1,0 +1,144 @@
+/* Applicant portal styles */
+
+.job-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.job-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.job-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.job-card h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.job-card .meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.job-card .description {
+  font-size: 0.9rem;
+  color: var(--text);
+  flex: 1;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.job-card .skills {
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+}
+
+.job-card .skills span {
+  display: inline-block;
+  background: #eef2ff;
+  color: var(--primary);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin: 0.15rem 0.15rem 0 0;
+  font-weight: 600;
+}
+
+.job-card .actions {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.apply-modal .modal {
+  max-width: 640px;
+}
+
+.file-upload-group {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+
+.file-upload-group:hover {
+  border-color: var(--primary);
+}
+
+.file-upload-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.file-upload-group .hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+
+.file-upload-group input[type="file"] {
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.file-name {
+  font-size: 0.82rem;
+  color: var(--success);
+  margin-top: 0.35rem;
+}
+
+.applicant-welcome {
+  background: linear-gradient(135deg, #eef2ff, #f0fdfa);
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.applicant-welcome h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.applicant-welcome p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.app-status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.doc-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  margin-right: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 768px) {
+  .job-cards-grid { grid-template-columns: 1fr; }
+  .dashboard-content { padding: 1rem; }
+}

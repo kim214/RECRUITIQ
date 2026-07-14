@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reqruit IQ — AI-Powered Recruitment</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+</head>
+<body>
+  <nav class="public-nav">
+    <a href="index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a>
+    <div class="nav-links">
+      <a href="features.html">Features</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Smarter Hiring with AI</h1>
+    <p>Reqruit IQ matches candidates to jobs using intelligent document analysis, skill matching, and AI-powered rankings — so you hire the right talent faster.</p>
+    <div class="hero-actions">
+      <a href="register.html" class="btn btn-primary">Start Free</a>
+      <a href="features.html" class="btn btn-outline">See Features</a>
+    </div>
+  </section>
+
+  <section class="features-grid">
+    <div class="feature-card">
+      <div class="icon">🤖</div>
+      <h3>AI Candidate Ranking</h3>
+      <p>Automatically score and rank applicants based on skills, experience, and education match.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📄</div>
+      <h3>Document Analysis</h3>
+      <p>Parse resumes, transcripts, and certificates to extract qualifications automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">✅</div>
+      <h3>Shortlisting Pipeline</h3>
+      <p>Visual Kanban pipeline from application to hire with one-click status updates.</p>
+    </div>
+  </section>
+
+  <footer class="footer">&copy; 2026 Reqruit IQ. AI-powered recruitment platform.</footer>
+  <script src="../scripts/api.js"></script>
+  <script>
+    const user = getUser();
+    if (user) redirectByRole(user.role);
+  </script>
+</body>
+</html>

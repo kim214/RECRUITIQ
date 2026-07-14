@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse Jobs — Reqruit IQ</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../assets/css/interactive.css" />
+  <link rel="stylesheet" href="../assets/css/applicant.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon">🔍</span> Browse Jobs</a>
+        <a href="applications.html" data-page="applications"><span class="nav-icon">📨</span> My Applications</a>
+        <a href="profile.html" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
+        <a href="#" id="logout-btn" class="btn btn-ghost btn-sm mt-2" style="width:100%;color:#94a3b8">Logout</a>
+      </div>
+    </aside>
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <h1>Browse Open Jobs</h1>
+        <a href="applications.html" class="btn btn-outline btn-sm">My Applications</a>
+      </header>
+      <div class="dashboard-content">
+        <div class="applicant-welcome">
+          <h2>Find your next opportunity</h2>
+          <p>Browse open positions, upload your documents, and apply with one click.</p>
+        </div>
+        <div id="jobs-list" class="job-cards-grid">Loading...</div>
+      </div>
+    </main>
+  </div>
+
+  <div id="apply-modal" class="modal-overlay hidden apply-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="apply-job-title">Apply for Job</h2>
+        <button class="btn btn-ghost btn-sm" id="close-apply" type="button">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="apply-alert" class="alert hidden"></div>
+        <form id="apply-form">
+          <input type="hidden" name="jobId" />
+          <div class="form-group">
+            <label>Cover Letter *</label>
+            <textarea name="coverLetter" class="form-control" rows="4" required placeholder="Tell the employer why you're a great fit..."></textarea>
+          </div>
+
+          <div class="file-upload-group">
+            <label>📄 Resume (PDF or DOC)</label>
+            <input type="file" name="resume" accept=".pdf,.doc,.docx" />
+            <div class="hint">Required — upload your CV or resume</div>
+            <div class="file-name" id="resume-name"></div>
+          </div>
+
+          <div class="file-upload-group">
+            <label>🎓 Academic Transcript</label>
+            <input type="file" name="transcript" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+            <div class="hint">Optional — academic records or degree certificate</div>
+            <div class="file-name" id="transcript-name"></div>
+          </div>
+
+          <div class="file-upload-group">
+            <label>📜 Certificates</label>
+            <input type="file" name="certificates" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" multiple />
+            <div class="hint">Optional — professional certifications (up to 5 files)</div>
+            <div class="file-name" id="certs-name"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submit-btn" style="width:100%">Submit Application</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/dashboard.js"></script>
+  <script>
+    requireAuth(['applicant']);
+    initSidebar('jobs');
+
+    const modal = document.getElementById('apply-modal');
+    const form = document.getElementById('apply-form');
+
+    document.getElementById('close-apply').onclick = () => modal.classList.add('hidden');
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+    form.resume.addEventListener('change', () => {
+      document.getElementById('resume-name').textContent = form.resume.files[0]?.name || '';
+    });
+    form.transcript.addEventListener('change', () => {
+      document.getElementById('transcript-name').textContent = form.transcript.files[0]?.name || '';
+    });
+    form.certificates.addEventListener('change', () => {
+      document.getElementById('certs-name').textContent = [...form.certificates.files].map(f => f.name).join(', ');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('apply-alert');
+      const btn = document.getElementById('submit-btn');
+      if (!form.resume.files[0]) {
+        alertEl.className = 'alert alert-error';
+        alertEl.textContent = 'Please upload your resume.';
+        alertEl.classList.remove('hidden');
+        return;
+      }
+      btn.textContent = 'Uploading documents...';
+      btn.disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append('resume', form.resume.files[0]);
+        if (form.transcript.files[0]) fd.append('transcript', form.transcript.files[0]);
+        [...form.certificates.files].forEach(f => fd.append('certificates', f));
+
+        const urls = await api.uploadDocuments(fd);
+        btn.textContent = 'Submitting application...';
+
+        await api.applyToJob({
+          jobId: form.jobId.value,
+          coverLetter: form.coverLetter.value,
+          resumeUrl: urls.resumeUrl,
+          transcriptUrl: urls.transcriptUrl,
+          certificatesUrl: urls.certificatesUrl || [],
+        });
+
+        alertEl.className = 'alert alert-success';
+        alertEl.textContent = 'Application submitted successfully!';
+        alertEl.classList.remove('hidden');
+        setTimeout(() => { modal.classList.add('hidden'); form.reset(); loadJobs(); }, 1500);
+      } catch (err) {
+        alertEl.className = 'alert alert-error';
+        alertEl.textContent = err.message;
+        alertEl.classList.remove('hidden');
+      } finally {
+        btn.textContent = 'Submit Application';
+        btn.disabled = false;
+      }
+    });
+
+    async function loadJobs() {
+      const el = document.getElementById('jobs-list');
+      try {
+        const jobs = await api.getJobs();
+        if (!jobs.length) {
+          el.className = '';
+          el.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>No open jobs right now. Check back soon!</p></div>';
+          return;
+        }
+        el.className = 'job-cards-grid';
+        el.innerHTML = jobs.map(j => `
+          <div class="job-card">
+            <h3>${j.title}</h3>
+            <div class="meta">${j.location || 'Remote'} · ${j.employmentType || 'full-time'} · ${j.employerName || 'Company'}</div>
+            <p class="description">${j.description?.slice(0, 180)}${j.description?.length > 180 ? '...' : ''}</p>
+            <div class="skills">${(j.requiredSkills || []).map(s => `<span>${s}</span>`).join('')}</div>
+            <div class="actions">
+              <button class="btn btn-primary btn-sm" data-apply="${j.id}" data-title="${j.title}">Apply Now</button>
+            </div>
+          </div>`).join('');
+
+        el.querySelectorAll('[data-apply]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('apply-job-title').textContent = 'Apply: ' + btn.dataset.title;
+            form.jobId.value = btn.dataset.apply;
+            form.reset();
+            ['resume-name','transcript-name','certs-name'].forEach(id => document.getElementById(id).textContent = '');
+            document.getElementById('apply-alert').classList.add('hidden');
+            modal.classList.remove('hidden');
+          });
+        });
+      } catch (e) {
+        el.className = '';
+        el.innerHTML = `<p class="alert alert-error">${e.message}</p>`;
+      }
+    }
+    loadJobs();
+  </script>
+</body>
+</html>
