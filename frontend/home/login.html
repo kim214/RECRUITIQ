@@ -4,35 +4,86 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/auth.css" />
 </head>
 <body>
-  <div class="auth-page">
-    <div class="auth-card">
-      <div class="logo-center"><a href="index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
-      <h1>Welcome back</h1>
-      <p class="subtitle">Sign in to your account</p>
-      <div id="session-alert" class="alert alert-info hidden">Your session expired. Please log in again.</div>
-      <div id="alert" class="alert hidden"></div>
-      <form id="login-form">
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" name="email" class="form-control" required placeholder="you@company.com" />
+  <div class="auth-layout">
+    <aside class="auth-brand">
+      <div class="auth-brand-inner">
+        <a href="index.html" class="logo">
+          <img src="../assets/images/logo-icon.svg" alt="" width="44" height="44" />
+          <span class="logo-text">Reqruit <strong>IQ</strong></span>
+        </a>
+        <h2>Welcome back to smarter hiring</h2>
+        <p>Sign in to access your dashboard, manage applications, and leverage AI-powered candidate insights.</p>
+        <ul class="auth-perks">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            AI-ranked candidate shortlists
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Real-time application tracking
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Secure document management
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <div class="auth-page">
+      <div class="auth-mobile-logo">
+        <a href="index.html" class="logo">
+          <img src="../assets/images/logo-icon.svg" alt="" width="40" height="40" />
+          <span class="logo-text">Reqruit <strong>IQ</strong></span>
+        </a>
+      </div>
+
+      <div class="auth-glow-card">
+        <div class="auth-glow-card-inner">
+          <form id="login-form" class="auth-form">
+            <p class="auth-heading">Login</p>
+            <p class="auth-subheading">Sign in to your Reqruit IQ account</p>
+
+            <div id="session-alert" class="auth-alert auth-alert-info hidden">Your session expired. Please log in again.</div>
+            <div id="alert" class="auth-alert hidden"></div>
+
+            <div class="auth-fields">
+            <div class="auth-field">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="auth-input-icon" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+              <input type="email" name="email" class="auth-input-field" required placeholder="Email" autocomplete="email" />
+            </div>
+
+            <div class="auth-field">
+              <svg viewBox="0 0 16 16" fill="currentColor" class="auth-input-icon" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              </svg>
+              <input type="password" name="password" class="auth-input-field" required placeholder="Password" autocomplete="current-password" />
+            </div>
+            </div>
+
+            <div class="auth-btn-row">
+              <button type="submit" class="auth-button1">Login</button>
+              <a href="register.html" class="auth-button2">Sign Up</a>
+            </div>
+
+            <a href="contact.html" class="auth-button3">Need Help?</a>
+          </form>
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" name="password" class="form-control" required placeholder="••••••••" />
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
-      </form>
-      <p class="auth-footer">Don't have an account? <a href="register.html">Register</a></p>
-      <p class="auth-footer" style="margin-top:0.75rem;font-size:0.8rem">
-        Demo: employer@reqruit.com / employer123
-      </p>
+      </div>
+
+      <p class="auth-demo-dark">Demo: <strong>employer@reqruit.com</strong> / employer123</p>
     </div>
   </div>
+
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
   <script>
     const user = getUser();
     if (user) redirectByRole(user.role);
@@ -43,15 +94,19 @@
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const f = e.target;
+      const btn = f.querySelector('button[type=submit]');
       const alertEl = document.getElementById('alert');
+      setButtonLoading(btn, true, 'Login', 'Signing in...');
       try {
         const { token, user } = await api.login(f.email.value, f.password.value);
         setAuth(token, user);
+        showPageLoader('Redirecting to your dashboard...');
         redirectByRole(user.role);
       } catch (err) {
-        alertEl.className = 'alert alert-error';
+        alertEl.className = 'auth-alert auth-alert-error';
         alertEl.textContent = err.message;
         alertEl.classList.remove('hidden');
+        setButtonLoading(btn, false, 'Login');
       }
     });
   </script>

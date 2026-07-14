@@ -4,19 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profile — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/dashboard.css" />
   <link rel="stylesheet" href="../assets/css/applicant.css" />
 </head>
-<body>
+<body class="portal-applicant">
   <div class="dashboard-layout">
     <aside class="sidebar">
-      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><img src="../assets/images/logo-icon.svg" alt="" width="36" height="36" /><span class="logo-text">Reqruit <strong>IQ</strong></span></a></div>
+      <span class="sidebar-badge">Applicant Portal</span>
       <nav class="sidebar-nav">
-        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="jobs.html" data-page="jobs"><span class="nav-icon">🔍</span> Browse Jobs</a>
-        <a href="applications.html" data-page="applications"><span class="nav-icon">📨</span> My Applications</a>
-        <a href="profile.html" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span> Browse Jobs</a>
+        <a href="applications.html" data-page="applications"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg></span> My Applications</a>
+        <a href="profile.html" data-page="profile"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Profile</a>
       </nav>
       <div class="sidebar-footer">
         <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
@@ -28,7 +30,7 @@
       <div class="dashboard-content">
         <div class="panel" style="max-width:560px">
           <div class="panel-header"><h2>Account Details</h2></div>
-          <div class="panel-body" id="profile-info">Loading...</div>
+          <div class="panel-body" id="profile-info" data-loader="Loading profile..."></div>
         </div>
         <div class="panel" style="max-width:560px;margin-top:1.5rem">
           <div class="panel-header"><h2>Application Tips</h2></div>
@@ -45,6 +47,8 @@
     </main>
   </div>
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
+  <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
   <script>
     requireAuth(['applicant']);

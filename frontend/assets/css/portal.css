@@ -1,0 +1,457 @@
+/* Reqruit IQ — Portal design system (employer, applicant, admin) */
+
+/* ── Sidebar premium ── */
+.sidebar {
+  background: linear-gradient(180deg, #0c1222 0%, #111827 50%, #0f172a 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+}
+
+.portal-applicant .sidebar {
+  background: linear-gradient(180deg, #0c1222 0%, #0f2a2a 55%, #0d1f1e 100%);
+}
+
+.portal-admin .sidebar {
+  background: linear-gradient(180deg, #0c1222 0%, #1a1035 55%, #150d28 100%);
+}
+
+.sidebar-header {
+  padding: 1.35rem 1.25rem;
+}
+
+.sidebar-nav {
+  padding: 1.25rem 0.85rem;
+  gap: 0.35rem;
+}
+
+.sidebar-nav a {
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  border: 1px solid transparent;
+}
+
+.sidebar-nav a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.sidebar-nav a.active {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(6, 182, 212, 0.2));
+  border-color: rgba(103, 232, 249, 0.25);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15);
+}
+
+.portal-applicant .sidebar-nav a.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.2));
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.portal-admin .sidebar-nav a.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(236, 72, 153, 0.15));
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.nav-icon-svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.nav-icon-svg svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-nav a.active .nav-icon-svg {
+  opacity: 1;
+  color: #67e8f9;
+}
+
+.portal-applicant .sidebar-nav a.active .nav-icon-svg { color: #6ee7b7; }
+.portal-admin .sidebar-nav a.active .nav-icon-svg { color: #c4b5fd; }
+
+.sidebar-footer {
+  padding: 1rem 0.85rem 1.25rem;
+}
+
+.user-chip {
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 0.5rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.sidebar-footer .btn-ghost {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.sidebar-footer .btn-ghost:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+.sidebar-badge {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sidebar-text);
+  padding: 0 1rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.7;
+}
+
+/* ── Topbar ── */
+.dashboard-topbar {
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.topbar-title-wrap h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.topbar-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  font-weight: 500;
+}
+
+.dashboard-topbar .btn-primary {
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+}
+
+/* ── Content area ── */
+.dashboard-content {
+  padding: 1.75rem 2rem 2.5rem;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(79, 70, 229, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 100%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+    var(--bg);
+}
+
+.portal-applicant .dashboard-content {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+    var(--bg);
+}
+
+.portal-admin .dashboard-content {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+    var(--bg);
+}
+
+/* ── Welcome banner ── */
+.dash-welcome {
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid rgba(199, 210, 254, 0.6);
+  background: linear-gradient(135deg, #fff 0%, #eef2ff 40%, #ecfeff 100%);
+  box-shadow: 0 8px 32px rgba(79, 70, 229, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-welcome::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.dash-welcome-content {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.dash-welcome h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.dash-welcome-emoji {
+  font-size: 2.5rem;
+  line-height: 1;
+  position: relative;
+  filter: drop-shadow(0 4px 8px rgba(79, 70, 229, 0.2));
+}
+
+.portal-applicant .dash-welcome {
+  background: linear-gradient(135deg, #fff 0%, #ecfdf5 45%, #ecfeff 100%);
+  border-color: rgba(110, 231, 183, 0.4);
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.08);
+}
+
+.portal-admin .dash-welcome {
+  background: linear-gradient(135deg, #fff 0%, #f5f3ff 45%, #fdf4ff 100%);
+  border-color: rgba(196, 181, 253, 0.5);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.08);
+}
+
+/* ── Stat cards ── */
+.stat-card {
+  border-radius: 16px;
+  padding: 1.35rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.stat-card::before {
+  height: 4px;
+  border-radius: 16px 16px 0 0;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(79, 70, 229, 0.12);
+  border-color: #c7d2fe;
+}
+
+.stat-card.clickable:hover::before {
+  opacity: 1;
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #eef2ff, #ecfeff);
+  color: var(--primary);
+}
+
+.stat-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+}
+
+.stat-card.stat-teal .stat-icon-wrap {
+  background: linear-gradient(135deg, #d1fae5, #ecfeff);
+  color: #059669;
+}
+
+.stat-card.stat-amber .stat-icon-wrap {
+  background: linear-gradient(135deg, #fef3c7, #ffedd5);
+  color: #d97706;
+}
+
+.stat-card.stat-rose .stat-icon-wrap {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe);
+  color: #db2777;
+}
+
+.stat-card.stat-violet .stat-icon-wrap {
+  background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+  color: #7c3aed;
+}
+
+.stat-card.stat-primary .stat-icon-wrap,
+.stat-card:not([class*="stat-"]) .stat-icon-wrap {
+  background: linear-gradient(135deg, #eef2ff, #ecfeff);
+  color: var(--primary);
+}
+
+.stat-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-card .label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.stat-card .value {
+  font-size: 1.85rem;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--text), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Legacy emoji stat-icon fallback */
+.stat-card > .stat-icon:not(.stat-icon-wrap) {
+  font-size: 1.75rem;
+}
+
+/* ── Panels ── */
+.panel {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.panel:hover {
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.07);
+}
+
+.panel-header {
+  padding: 1.15rem 1.5rem;
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-header h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-header h2::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--primary), var(--accent));
+}
+
+.panel-body {
+  padding: 1.35rem 1.5rem;
+}
+
+/* ── Tables ── */
+.data-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.data-table thead {
+  background: #f8fafc;
+}
+
+.data-table th {
+  padding: 0.9rem 1.15rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.data-table td {
+  padding: 1rem 1.15rem;
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s;
+}
+
+.data-table tbody tr:hover td {
+  background: #f1f5f9;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  padding: 3.5rem 2rem;
+}
+
+.empty-state .empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #eef2ff, #ecfeff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.empty-state h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.empty-state p {
+  font-size: 0.92rem;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* ── Page sections ── */
+.page-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.content-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 992px) {
+  .content-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .dash-welcome {
+    padding: 1.5rem;
+  }
+
+  .dash-welcome-emoji {
+    display: none;
+  }
+}

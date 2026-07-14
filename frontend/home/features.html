@@ -3,29 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Explore Reqruit IQ features — AI rankings, document analysis, hiring pipeline, and more." />
   <title>Features — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/home.css" />
+  <link rel="stylesheet" href="../assets/css/public-pages.css" />
 </head>
-<body>
-  <nav class="public-nav">
-    <a href="index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a>
-    <div class="nav-links">
+<body class="home-page">
+
+  <nav class="public-nav home-nav">
+    <a href="index.html" class="logo" aria-label="Reqruit IQ home">
+      <img src="../assets/images/logo-icon.svg" alt="" width="40" height="40" />
+      <span class="logo-text">Reqruit <strong>IQ</strong></span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="nav-links" id="nav-links">
       <a href="features.html">Features</a>
+      <a href="index.html#how-it-works">How it works</a>
       <a href="about.html">About</a>
-      <a href="login.html" class="btn btn-primary btn-sm">Login</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
     </div>
   </nav>
-  <div class="container">
-    <h1 style="margin-bottom:2rem">Platform Features</h1>
-    <div class="features-grid" style="padding:0">
-      <div class="feature-card"><div class="icon">🏆</div><h3>AI Rankings</h3><p>Score candidates 0–100 on skills, education, and experience fit.</p></div>
-      <div class="feature-card"><div class="icon">📊</div><h3>Employer Dashboard</h3><p>Track jobs, applications, pipeline stages, and hiring metrics.</p></div>
-      <div class="feature-card"><div class="icon">👥</div><h3>Candidate Browser</h3><p>Search, filter, and review applicants with AI insights.</p></div>
-      <div class="feature-card"><div class="icon">📋</div><h3>Job Posting</h3><p>Define skills, education, certifications, and experience requirements.</p></div>
-      <div class="feature-card"><div class="icon">✅</div><h3>Kanban Pipeline</h3><p>Move candidates through stages from applied to hired.</p></div>
-      <div class="feature-card"><div class="icon">📈</div><h3>Analytics</h3><p>Shortlist rates, application volume, and platform-wide stats.</p></div>
+
+  <section class="page-hero">
+    <div class="page-hero-inner">
+      <span class="section-label">Platform capabilities</span>
+      <h1>Powerful tools for modern recruitment</h1>
+      <p>From AI-powered candidate scoring to visual hiring pipelines — everything your team needs to hire faster and fairer.</p>
+    </div>
+  </section>
+
+  <div class="page-body">
+    <div class="feature-category">
+      <span class="cat-badge">AI &amp; Intelligence</span>
+      <h2>Smart matching that saves hours</h2>
+      <p>Let AI handle the heavy lifting of resume screening so your team focuses on people, not paperwork.</p>
+      <div class="home-features">
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7z"/></svg>
+          </div>
+          <h3>AI Rankings</h3>
+          <p>Score candidates 0–100 on skills, education, certifications, and experience fit against each job's requirements.</p>
+        </article>
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
+          </div>
+          <h3>Document Analysis</h3>
+          <p>Automatically parse resumes, transcripts, and certificates to extract qualifications and match them to job criteria.</p>
+        </article>
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>AI Insights</h3>
+          <p>Get per-candidate analysis explaining strengths, gaps, and why each applicant received their match score.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="feature-category">
+      <span class="cat-badge">Employer tools</span>
+      <h2>Built for hiring teams</h2>
+      <p>Manage your entire recruitment workflow from one clean, focused employer portal.</p>
+      <div class="home-features">
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </div>
+          <h3>Job Posting</h3>
+          <p>Define required skills, education levels, certifications, and years of experience for every role you post.</p>
+        </article>
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Candidate Browser</h3>
+          <p>Search, filter, and review all applicants with AI match scores and detailed application data at a glance.</p>
+        </article>
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <h3>Kanban Pipeline</h3>
+          <p>Move candidates through stages — applied, reviewed, interviewed, offered, hired — with one-click updates.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="feature-category">
+      <span class="cat-badge">Analytics &amp; portals</span>
+      <h2>Visibility across the platform</h2>
+      <p>Track performance and give every user type a tailored experience.</p>
+      <div class="home-features">
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-6"/></svg>
+          </div>
+          <h3>Analytics Dashboard</h3>
+          <p>Monitor shortlist rates, application volume, active jobs, and hiring metrics in real time.</p>
+        </article>
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h3>Applicant Portal</h3>
+          <p>Job seekers browse openings, upload documents, apply to roles, and track status from their own dashboard.</p>
+        </article>
+        <article class="home-feature">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Admin Controls</h3>
+          <p>Platform administrators manage users, jobs, and system-wide analytics from a dedicated admin portal.</p>
+        </article>
+      </div>
     </div>
   </div>
-  <footer class="footer">&copy; 2026 Reqruit IQ</footer>
+
+  <section class="home-section alt">
+    <div class="cta-banner">
+      <h2>See it in action</h2>
+      <p>Create a free account and experience AI-powered recruitment firsthand — no credit card required.</p>
+      <div class="hero-actions">
+        <a href="register.html" class="btn btn-primary">Get started free</a>
+        <a href="login.html" class="btn btn-outline">Sign in</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="home-footer">
+    <div class="home-footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <img src="../assets/images/logo-icon.svg" alt="" width="40" height="40" />
+          <span class="logo-text">Reqruit <strong>IQ</strong></span>
+        </a>
+        <p>AI-powered recruitment platform helping teams hire smarter and job seekers land the right roles faster.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="features.html">Features</a>
+        <a href="index.html#how-it-works">How it works</a>
+        <a href="index.html">Home</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About us</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <a href="login.html">Login</a>
+        <a href="register.html">Sign up</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Reqruit IQ. All rights reserved.</span>
+      <span>AI-powered recruitment platform</span>
+    </div>
+  </footer>
+
+  <script src="../scripts/public-nav.js"></script>
 </body>
 </html>

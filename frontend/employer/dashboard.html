@@ -4,23 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Employer Dashboard — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/dashboard.css" />
   <link rel="stylesheet" href="../assets/css/interactive.css" />
 </head>
-<body>
+<body class="portal-employer">
   <div class="dashboard-layout">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a>
+        <a href="../home/index.html" class="logo"><img src="../assets/images/logo-icon.svg" alt="" width="36" height="36" /><span class="logo-text">Reqruit <strong>IQ</strong></span></a>
       </div>
+      <span class="sidebar-badge">Employer Portal</span>
       <nav class="sidebar-nav">
-        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="create-job.html" data-page="create-job"><span class="nav-icon">➕</span> Post Job</a>
-        <a href="candidates.html" data-page="candidates"><span class="nav-icon">👥</span> Candidates</a>
-        <a href="shortlist.html" data-page="shortlist"><span class="nav-icon">✅</span> Shortlisting</a>
-        <a href="rankings.html" data-page="rankings"><span class="nav-icon">🏆</span> AI Rankings</a>
-        <a href="reports.html" data-page="reports"><span class="nav-icon">📈</span> Reports</a>
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+        <a href="create-job.html" data-page="create-job"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span> Post Job</a>
+        <a href="candidates.html" data-page="candidates"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Candidates</a>
+        <a href="shortlist.html" data-page="shortlist"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> Shortlisting</a>
+        <a href="rankings.html" data-page="rankings"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7z"/></svg></span> AI Rankings</a>
+        <a href="reports.html" data-page="reports"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-6"/></svg></span> Reports</a>
       </nav>
       <div class="sidebar-footer">
         <div class="user-chip">
@@ -35,66 +37,76 @@
     </aside>
     <main class="dashboard-main">
       <header class="dashboard-topbar">
-        <h1>Employer Dashboard</h1>
+        <div class="topbar-title-wrap">
+          <h1>Employer Dashboard</h1>
+          <p class="topbar-subtitle">Manage hiring, candidates &amp; AI rankings</p>
+        </div>
         <a href="create-job.html" class="btn btn-primary btn-sm">+ Post New Job</a>
       </header>
       <div class="dashboard-content">
+        <div class="employer-welcome dash-welcome" id="welcome"></div>
+        <p class="page-section-title">Overview</p>
         <div class="stats-grid" id="stats-grid">
-          <a href="create-job.html" class="stat-card clickable" style="text-decoration:none;color:inherit">
-            <div class="stat-icon">📋</div>
-            <div class="label">Active Jobs</div>
-            <div class="value" id="stat-jobs">—</div>
+          <a href="create-job.html" class="stat-card stat-teal clickable">
+            <div class="stat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+            <div class="stat-meta"><span class="label">Active Jobs</span><span class="value" id="stat-jobs">—</span></div>
           </a>
-          <a href="candidates.html" class="stat-card clickable" style="text-decoration:none;color:inherit">
-            <div class="stat-icon">📨</div>
-            <div class="label">Applications</div>
-            <div class="value" id="stat-apps">—</div>
+          <a href="candidates.html" class="stat-card clickable">
+            <div class="stat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg></div>
+            <div class="stat-meta"><span class="label">Applications</span><span class="value" id="stat-apps">—</span></div>
           </a>
-          <a href="rankings.html" class="stat-card clickable" style="text-decoration:none;color:inherit">
-            <div class="stat-icon">⏳</div>
-            <div class="label">Pending Review</div>
-            <div class="value" id="stat-pending">—</div>
+          <a href="rankings.html" class="stat-card stat-amber clickable">
+            <div class="stat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="stat-meta"><span class="label">Pending Review</span><span class="value" id="stat-pending">—</span></div>
           </a>
-          <a href="shortlist.html" class="stat-card clickable" style="text-decoration:none;color:inherit">
-            <div class="stat-icon">⭐</div>
-            <div class="label">Shortlisted</div>
-            <div class="value" id="stat-shortlisted">—</div>
+          <a href="shortlist.html" class="stat-card stat-rose clickable">
+            <div class="stat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7z"/></svg></div>
+            <div class="stat-meta"><span class="label">Shortlisted</span><span class="value" id="stat-shortlisted">—</span></div>
           </a>
         </div>
 
-        <div class="quick-actions-grid" style="margin-bottom:1.5rem">
+        <p class="page-section-title">Quick actions</p>
+        <div class="quick-actions-grid" style="margin-bottom:1.75rem">
           <a href="create-job.html" class="quick-action-btn"><span>➕</span> Post Job</a>
           <a href="candidates.html" class="quick-action-btn"><span>👥</span> View Candidates</a>
           <a href="shortlist.html" class="quick-action-btn"><span>✅</span> Shortlist</a>
           <a href="rankings.html" class="quick-action-btn"><span>🤖</span> AI Rankings</a>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div class="content-grid-2">
           <div class="panel">
             <div class="panel-header"><h2>Recent Activity</h2></div>
-            <div class="panel-body" id="activity-feed">Loading...</div>
+            <div class="panel-body" id="activity-feed" data-loader="Loading activity..."></div>
           </div>
           <div class="panel">
             <div class="panel-header"><h2>Pipeline Overview</h2></div>
             <div class="panel-body">
-              <div class="activity-chart" id="pipeline-chart"></div>
+              <div class="activity-chart" id="pipeline-chart" data-loader="Loading chart..."></div>
             </div>
           </div>
         </div>
 
         <div class="panel" style="margin-top:1.5rem">
           <div class="panel-header"><h2>Your Job Listings</h2><a href="create-job.html" class="btn btn-outline btn-sm">New Job</a></div>
-          <div class="panel-body" id="jobs-list"><p>Loading...</p></div>
+          <div class="panel-body" id="jobs-list" data-loader="Loading jobs..."></div>
         </div>
       </div>
     </main>
   </div>
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
+  <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
   <script src="../scripts/employer-ui.js"></script>
   <script>
     requireAuth(['employer']);
     initSidebar('dashboard');
+    const user = getUser();
+    document.getElementById('welcome').innerHTML = buildWelcomeBanner(
+      `Welcome back, ${user?.fullName || 'Employer'}!`,
+      'Manage your jobs, review AI-ranked candidates, and move applicants through your hiring pipeline.',
+      '💼'
+    );
     (async () => {
       try {
         const [stats, jobs, activity] = await Promise.all([
@@ -107,7 +119,7 @@
 
         const feed = document.getElementById('activity-feed');
         if (!activity.length) {
-          feed.innerHTML = '<p style="color:var(--text-muted)">No recent activity yet.</p>';
+          feed.innerHTML = buildEmptyState('📬', 'No activity yet', 'New applications will appear here as candidates apply to your jobs.');
         } else {
           feed.innerHTML = activity.slice(0, 6).map((a) => `
             <div class="notif-item" style="cursor:pointer" data-app="${a.applicationId}">
@@ -138,7 +150,7 @@
 
         const el = document.getElementById('jobs-list');
         if (!jobs.length) {
-          el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No jobs yet. Post your first job!</p></div>';
+          el.innerHTML = buildEmptyState('📋', 'No jobs posted', 'Post your first job to start receiving applications.');
           return;
         }
         el.innerHTML = `<table class="data-table"><thead><tr><th>Title</th><th>Apps</th><th>Status</th><th>Actions</th></tr></thead><tbody>

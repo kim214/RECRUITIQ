@@ -7,6 +7,9 @@ function initSidebar(activePage) {
     if (avatar) avatar.textContent = (user.fullName || user.email || '?')[0].toUpperCase();
     if (name) name.textContent = user.fullName || user.email;
     if (role) role.textContent = user.role;
+    if (user.role) {
+      document.body.classList.add(`portal-${user.role}`);
+    }
   }
 
   document.querySelectorAll('.sidebar-nav a[data-page]').forEach((link) => {

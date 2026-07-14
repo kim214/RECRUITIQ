@@ -4,66 +4,141 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/auth.css" />
 </head>
 <body>
-  <div class="auth-page">
-    <div class="auth-card">
-      <div class="logo-center"><a href="index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
-      <h1>Create account</h1>
-      <p class="subtitle">Join Reqruit IQ today</p>
-      <div id="alert" class="alert hidden"></div>
-      <form id="register-form">
-        <div class="role-select">
-          <div class="role-option selected" data-role="applicant">
-            <div class="icon">👤</div>
-            <div class="label">Applicant</div>
-          </div>
-          <div class="role-option" data-role="employer">
-            <div class="icon">🏢</div>
-            <div class="label">Employer</div>
-          </div>
+  <div class="auth-layout">
+    <aside class="auth-brand">
+      <div class="auth-brand-inner">
+        <a href="index.html" class="logo">
+          <img src="../assets/images/logo-icon.svg" alt="" width="44" height="44" />
+          <span class="logo-text">Reqruit <strong>IQ</strong></span>
+        </a>
+        <h2>Start hiring — or finding — your next role</h2>
+        <p>Create a free account in under a minute. Choose your role and get instant access to your personalized portal.</p>
+        <ul class="auth-perks">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Free to get started — no credit card
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Employer or applicant — your choice
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            AI matching from day one
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <div class="auth-page auth-page--signup">
+      <div class="auth-mobile-logo">
+        <a href="index.html" class="logo">
+          <img src="../assets/images/logo-icon.svg" alt="" width="40" height="40" />
+          <span class="logo-text">Reqruit <strong>IQ</strong></span>
+        </a>
+      </div>
+
+      <div class="auth-glow-card auth-glow-card--signup">
+        <div class="auth-glow-card-inner">
+          <form id="register-form" class="auth-form auth-form--signup">
+            <p class="auth-heading">Sign Up</p>
+            <p class="auth-subheading">Create your free Reqruit IQ account</p>
+
+            <div id="alert" class="auth-alert hidden"></div>
+
+            <div class="auth-role-section">
+              <span class="auth-role-label">I am joining as</span>
+              <div class="auth-role-row">
+                <button type="button" class="auth-role-btn selected" data-role="applicant">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                  Applicant
+                </button>
+                <button type="button" class="auth-role-btn" data-role="employer">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+                  Employer
+                </button>
+              </div>
+            </div>
+            <input type="hidden" name="role" value="applicant" />
+
+            <div class="auth-fields">
+              <div class="auth-field">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="auth-input-icon" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                <input type="text" name="fullName" class="auth-input-field" required placeholder="Full name" autocomplete="name" />
+              </div>
+
+              <div class="auth-field auth-field-collapsible" id="company-group">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="auth-input-icon" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
+                </svg>
+                <input type="text" name="company" class="auth-input-field" placeholder="Company name" />
+              </div>
+
+              <div class="auth-field">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="auth-input-icon" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <input type="email" name="email" class="auth-input-field" required placeholder="Email address" autocomplete="email" />
+              </div>
+
+              <div class="auth-field">
+                <svg viewBox="0 0 16 16" fill="currentColor" class="auth-input-icon" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+                <input type="password" name="password" class="auth-input-field" required minlength="6" placeholder="Password (6+ characters)" autocomplete="new-password" />
+              </div>
+            </div>
+
+            <div class="auth-btn-row">
+              <button type="submit" class="auth-button1">Sign Up</button>
+              <a href="login.html" class="auth-button2">Login</a>
+            </div>
+
+            <a href="index.html" class="auth-button3">Back to Home</a>
+          </form>
         </div>
-        <input type="hidden" name="role" value="applicant" />
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" name="fullName" class="form-control" required />
-        </div>
-        <div class="form-group" id="company-group" style="display:none">
-          <label>Company Name</label>
-          <input type="text" name="company" class="form-control" />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" name="email" class="form-control" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" name="password" class="form-control" required minlength="6" />
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%">Create Account</button>
-      </form>
-      <p class="auth-footer">Already have an account? <a href="login.html">Login</a></p>
+      </div>
+
+      <p class="auth-demo-dark">Already have an account? <a href="login.html" style="color:#00ff75">Sign in here</a></p>
     </div>
   </div>
+
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
   <script>
     let selectedRole = 'applicant';
-    document.querySelectorAll('.role-option').forEach((opt) => {
-      opt.addEventListener('click', () => {
-        document.querySelectorAll('.role-option').forEach((o) => o.classList.remove('selected'));
-        opt.classList.add('selected');
-        selectedRole = opt.dataset.role;
-        document.querySelector('[name=role]').value = selectedRole;
-        document.getElementById('company-group').style.display = selectedRole === 'employer' ? 'block' : 'none';
+    const companyGroup = document.getElementById('company-group');
+
+    function updateRole(role) {
+      selectedRole = role;
+      document.querySelector('[name=role]').value = role;
+      companyGroup.classList.toggle('is-visible', role === 'employer');
+      if (role !== 'employer') {
+        document.querySelector('[name=company]').value = '';
+      }
+    }
+
+    document.querySelectorAll('.auth-role-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.auth-role-btn').forEach((b) => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        updateRole(btn.dataset.role);
       });
     });
 
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const f = e.target;
+      const btn = f.querySelector('button[type=submit]');
       const alertEl = document.getElementById('alert');
+      setButtonLoading(btn, true, 'Sign Up', 'Creating account...');
       try {
         const { token, user } = await api.register({
           fullName: f.fullName.value,
@@ -73,11 +148,13 @@
           company: f.company?.value,
         });
         setAuth(token, user);
+        showPageLoader('Setting up your portal...');
         redirectByRole(user.role);
       } catch (err) {
-        alertEl.className = 'alert alert-error';
+        alertEl.className = 'auth-alert auth-alert-error';
         alertEl.textContent = err.message;
         alertEl.classList.remove('hidden');
+        setButtonLoading(btn, false, 'Sign Up');
       }
     });
   </script>

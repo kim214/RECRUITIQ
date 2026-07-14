@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="Reqruit IQ">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="13" fill="url(#iconGrad)"/>
+  <path d="M16 30c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="24" cy="22" r="2.8" fill="#fff"/>
+  <circle cx="32" cy="22" r="2.8" fill="#fff"/>
+  <path d="M20 34h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
+  <circle cx="36" cy="14" r="6" fill="#4338ca" stroke="#fff" stroke-width="1.5"/>
+  <path d="M34 14l1.5 1.5 3.2-3.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

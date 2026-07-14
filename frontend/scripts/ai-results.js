@@ -12,7 +12,7 @@ async function loadRankings() {
     rankingsBody.innerHTML = '<p>Select a job to view rankings.</p>';
     return;
   }
-  rankingsBody.innerHTML = '<p>Loading...</p>';
+  rankingsBody.innerHTML = loaderMarkup({ message: 'Loading rankings...' });
   try {
     const { rankings } = await api.getRankings(jobId);
     if (!rankings.length) {
@@ -42,16 +42,14 @@ async function loadRankings() {
 analyzeBtn.addEventListener('click', async () => {
   const jobId = jobSelect.value;
   if (!jobId) return alert('Select a job first');
-  analyzeBtn.textContent = 'Analyzing...';
-  analyzeBtn.disabled = true;
+  setButtonLoading(analyzeBtn, true, 'Run AI Analysis', 'Analyzing...');
   try {
     await api.runAiAnalysis(jobId);
     await loadRankings();
   } catch (e) {
     alert(e.message);
   } finally {
-    analyzeBtn.textContent = 'Run AI Analysis';
-    analyzeBtn.disabled = false;
+    setButtonLoading(analyzeBtn, false, 'Run AI Analysis');
   }
 });
 

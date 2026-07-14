@@ -4,18 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/dashboard.css" />
 </head>
-<body>
+<body class="portal-admin">
   <div class="dashboard-layout">
     <aside class="sidebar">
-      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><img src="../assets/images/logo-icon.svg" alt="" width="36" height="36" /><span class="logo-text">Reqruit <strong>IQ</strong></span></a></div>
+      <span class="sidebar-badge">Admin Portal</span>
       <nav class="sidebar-nav">
-        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="users.html" data-page="users"><span class="nav-icon">👥</span> Users</a>
-        <a href="jobs.html" data-page="jobs"><span class="nav-icon">📋</span> Jobs</a>
-        <a href="analytics.html" data-page="analytics"><span class="nav-icon">📈</span> Analytics</a>
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+        <a href="users.html" data-page="users"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Users</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span> Jobs</a>
+        <a href="analytics.html" data-page="analytics"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-6"/></svg></span> Analytics</a>
       </nav>
       <div class="sidebar-footer">
         <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
@@ -23,29 +25,50 @@
       </div>
     </aside>
     <main class="dashboard-main">
-      <header class="dashboard-topbar"><h1>Admin Dashboard</h1></header>
+      <header class="dashboard-topbar">
+        <div class="topbar-title-wrap">
+          <h1>Admin Dashboard</h1>
+          <p class="topbar-subtitle">Platform-wide users, jobs &amp; analytics</p>
+        </div>
+      </header>
       <div class="dashboard-content">
-        <div class="stats-grid" id="admin-stats"></div>
+        <div class="dash-welcome" id="welcome"></div>
+        <p class="page-section-title">Platform metrics</p>
+        <div class="stats-grid" id="admin-stats" data-loader="Loading stats..."></div>
         <div class="panel">
           <div class="panel-header"><h2>Platform Overview</h2></div>
-          <div class="panel-body" id="overview">Loading...</div>
+          <div class="panel-body" id="overview" data-loader="Loading overview..."></div>
         </div>
       </div>
     </main>
   </div>
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
+  <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
   <script>
     requireAuth(['admin']);
     initSidebar('dashboard');
+    const user = getUser();
+    document.getElementById('welcome').innerHTML = buildWelcomeBanner(
+      'Platform overview',
+      `Welcome, ${user?.fullName || 'Admin'}. Monitor users, jobs, and system-wide recruitment activity.`,
+      '⚙️'
+    );
     (async () => {
       const s = await api.adminStats();
-      document.getElementById('admin-stats').innerHTML = `
-        <div class="stat-card"><div class="label">Users</div><div class="value">${s.totalUsers}</div></div>
-        <div class="stat-card"><div class="label">Employers</div><div class="value">${s.employers}</div></div>
-        <div class="stat-card"><div class="label">Applicants</div><div class="value">${s.applicants}</div></div>
-        <div class="stat-card"><div class="label">Applications</div><div class="value">${s.totalApplications}</div></div>`;
-      document.getElementById('overview').innerHTML = `<p style="color:var(--text-muted)">${s.openJobs} open jobs · ${s.totalJobs} total jobs posted on the platform.</p>`;
+      document.getElementById('admin-stats').innerHTML = [
+        buildStatCard({ label: 'Total Users', value: s.totalUsers, icon: 'users', accent: 'violet' }),
+        buildStatCard({ label: 'Employers', value: s.employers, icon: 'jobs', accent: 'teal' }),
+        buildStatCard({ label: 'Applicants', value: s.applicants, icon: 'users', accent: 'primary' }),
+        buildStatCard({ label: 'Applications', value: s.totalApplications, icon: 'apps', accent: 'amber' }),
+      ].join('');
+      document.getElementById('overview').innerHTML = `
+        <div class="grid-3">
+          <div class="stat-card stat-teal"><div class="stat-meta"><span class="label">Open Jobs</span><span class="value" style="-webkit-text-fill-color:initial;color:var(--text)">${s.openJobs}</span></div></div>
+          <div class="stat-card"><div class="stat-meta"><span class="label">Total Jobs</span><span class="value" style="-webkit-text-fill-color:initial;color:var(--text)">${s.totalJobs}</span></div></div>
+          <div class="stat-card stat-violet"><div class="stat-meta"><span class="label">Active Platform</span><span class="value" style="-webkit-text-fill-color:initial;color:var(--success);font-size:1.25rem">Live</span></div></div>
+        </div>`;
     })();
   </script>
 </body>
