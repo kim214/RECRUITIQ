@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — Reqruit IQ</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../assets/css/applicant.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon">🔍</span> Browse Jobs</a>
+        <a href="applications.html" data-page="applications"><span class="nav-icon">📨</span> My Applications</a>
+        <a href="profile.html" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
+        <a href="#" id="logout-btn" class="btn btn-ghost btn-sm mt-2" style="width:100%;color:#94a3b8">Logout</a>
+      </div>
+    </aside>
+    <main class="dashboard-main">
+      <header class="dashboard-topbar"><h1>My Profile</h1></header>
+      <div class="dashboard-content">
+        <div class="panel" style="max-width:560px">
+          <div class="panel-header"><h2>Account Details</h2></div>
+          <div class="panel-body" id="profile-info">Loading...</div>
+        </div>
+        <div class="panel" style="max-width:560px;margin-top:1.5rem">
+          <div class="panel-header"><h2>Application Tips</h2></div>
+          <div class="panel-body">
+            <ul style="color:var(--text-muted);font-size:0.9rem;line-height:1.8;padding-left:1.25rem">
+              <li>Upload a clear PDF resume when applying</li>
+              <li>Add transcripts and certificates for better AI matching</li>
+              <li>Write a cover letter mentioning skills from the job listing</li>
+              <li>Check back here to track your application status</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/dashboard.js"></script>
+  <script>
+    requireAuth(['applicant']);
+    initSidebar('profile');
+    api.me().then(user => {
+      document.getElementById('profile-info').innerHTML = `
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+          <div class="user-avatar" style="width:56px;height:56px;font-size:1.25rem">${(user.fullName||'?')[0]}</div>
+          <div>
+            <div style="font-weight:700;font-size:1.1rem">${user.fullName}</div>
+            <div style="color:var(--text-muted);font-size:0.9rem">${user.email}</div>
+          </div>
+        </div>
+        <p><strong>Role:</strong> <span class="badge badge-primary">${user.role}</span></p>
+        ${user.phone ? `<p style="margin-top:0.5rem"><strong>Phone:</strong> ${user.phone}</p>` : ''}`;
+    });
+  </script>
+</body>
+</html>

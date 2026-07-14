@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Applicant Dashboard — Reqruit IQ</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../assets/css/applicant.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon">🔍</span> Browse Jobs</a>
+        <a href="applications.html" data-page="applications"><span class="nav-icon">📨</span> My Applications</a>
+        <a href="profile.html" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
+        <a href="#" id="logout-btn" class="btn btn-ghost btn-sm mt-2" style="width:100%;color:#94a3b8">Logout</a>
+      </div>
+    </aside>
+    <main class="dashboard-main">
+      <header class="dashboard-topbar">
+        <h1>My Dashboard</h1>
+        <a href="jobs.html" class="btn btn-primary btn-sm">Browse Jobs</a>
+      </header>
+      <div class="dashboard-content">
+        <div class="applicant-welcome" id="welcome"></div>
+        <div class="stats-grid" id="stats"></div>
+        <div class="panel">
+          <div class="panel-header"><h2>Recent Applications</h2><a href="applications.html" class="btn btn-outline btn-sm">View All</a></div>
+          <div class="panel-body" id="apps-list">Loading...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/dashboard.js"></script>
+  <script>
+    requireAuth(['applicant']);
+    initSidebar('dashboard');
+    const user = getUser();
+    document.getElementById('welcome').innerHTML = `
+      <h2>Welcome back, ${user?.fullName || 'Applicant'}!</h2>
+      <p>Track your applications and discover new job opportunities.</p>`;
+
+    (async () => {
+      try {
+        const apps = await api.getApplications();
+        document.getElementById('stats').innerHTML = `
+          <div class="stat-card"><div class="stat-icon">📨</div><div class="label">Total Applications</div><div class="value">${apps.length}</div></div>
+          <div class="stat-card"><div class="stat-icon">⏳</div><div class="label">In Review</div><div class="value">${apps.filter(a => ['submitted','ai_screening'].includes(a.status)).length}</div></div>
+          <div class="stat-card"><div class="stat-icon">⭐</div><div class="label">Shortlisted</div><div class="value">${apps.filter(a => a.status === 'shortlisted').length}</div></div>
+          <div class="stat-card"><div class="stat-icon">📅</div><div class="label">Interviews</div><div class="value">${apps.filter(a => a.status === 'interview_scheduled').length}</div></div>`;
+        const el = document.getElementById('apps-list');
+        if (!apps.length) {
+          el.innerHTML = '<div class="empty-state"><div class="icon">📨</div><p>No applications yet. <a href="jobs.html">Browse jobs</a> to apply.</p></div>';
+          return;
+        }
+        el.innerHTML = `<table class="data-table"><thead><tr><th>Job</th><th>Status</th><th>AI Score</th><th>Documents</th><th>Applied</th></tr></thead><tbody>
+          ${apps.slice(0,5).map(a => `<tr>
+            <td><strong>${a.jobTitle}</strong></td>
+            <td><span class="badge badge-info">${a.stageLabel}</span></td>
+            <td>${a.aiScore != null ? '<strong>'+Math.round(a.aiScore)+'%</strong>' : '—'}</td>
+            <td class="doc-links">${a.resumeUrl ? '<a href="'+a.resumeUrl+'" target="_blank">📄 Resume</a>' : '—'}</td>
+            <td>${formatDate(a.appliedAt)}</td>
+          </tr>`).join('')}
+        </tbody></table>`;
+      } catch (e) {
+        document.getElementById('apps-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`;
+      }
+    })();
+  </script>
+</body>
+</html>

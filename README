@@ -1,1 +1,21 @@
-REQRUIT IQ
+# Reqruit IQ
+
+AI-powered job recruitment platform — match candidates to jobs, rank with AI, and manage hiring pipelines.
+
+## Quick Start
+
+```bash
+# Terminal 1 — Backend API
+cd backend
+npm install
+npm start
+
+# Terminal 2 — AI Service (optional)
+cd recruit-ai
+pip install -r requirements.txt
+uvicorn api:app --reload --port 8000
+```
+
+Open: **http://localhost:3001/frontend/home/index.html**
+
+See [SETUP.md](SETUP.md) for full instructions, Supabase setup, and demo accounts.

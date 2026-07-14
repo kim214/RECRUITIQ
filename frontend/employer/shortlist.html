@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reports — Reqruit IQ</title>
+  <title>Shortlisting — Reqruit IQ</title>
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../assets/css/interactive.css" />
 </head>
 <body>
   <div class="dashboard-layout">
@@ -25,35 +26,47 @@
       </div>
     </aside>
     <main class="dashboard-main">
-      <header class="dashboard-topbar"><h1>Hiring Reports</h1></header>
+      <header class="dashboard-topbar">
+        <h1>Shortlisting Pipeline</h1>
+        <select id="job-select" class="form-control" style="max-width:280px"></select>
+      </header>
       <div class="dashboard-content">
-        <div class="stats-grid" id="report-stats"></div>
-        <div class="panel">
-          <div class="panel-header"><h2>Pipeline Overview</h2></div>
-          <div class="panel-body" id="pipeline-report"></div>
-        </div>
+        <p style="color:var(--text-muted);margin-bottom:1.25rem;font-size:0.95rem">
+          Click any candidate to shortlist, schedule interviews, hire, or reject.
+        </p>
+        <div class="kanban-board" id="kanban-board">Loading pipeline...</div>
       </div>
     </main>
   </div>
   <script src="../scripts/api.js"></script>
   <script src="../scripts/dashboard.js"></script>
+  <script src="../scripts/employer-ui.js"></script>
   <script>
     requireAuth(['employer']);
-    initSidebar('reports');
+    initSidebar('shortlist');
+    const jobSelect = document.getElementById('job-select');
+    const board = document.getElementById('kanban-board');
+    const jobParam = new URLSearchParams(window.location.search).get('job');
+
+    async function loadPipeline() {
+      const jobId = jobSelect.value;
+      if (!jobId) { board.innerHTML = '<p>No jobs available.</p>'; return; }
+      try {
+        const data = await api.getPipeline(jobId);
+        renderKanban(data.pipeline, board, jobId);
+      } catch (e) {
+        board.innerHTML = `<p class="alert alert-error">${e.message}</p>`;
+      }
+    }
+
+    window.onCandidateUpdated = loadPipeline;
+
     (async () => {
-      const stats = await api.employerStats();
-      document.getElementById('report-stats').innerHTML = `
-        <div class="stat-card"><div class="label">Jobs Posted</div><div class="value">${stats.activeJobs}</div></div>
-        <div class="stat-card"><div class="label">Applications</div><div class="value">${stats.totalApplications}</div></div>
-        <div class="stat-card"><div class="label">AI Analyzed</div><div class="value">${stats.analyzed || 0}</div></div>
-        <div class="stat-card"><div class="label">Shortlist Rate</div><div class="value">${stats.shortlistRate || 0}%</div></div>`;
-      document.getElementById('pipeline-report').innerHTML = `
-        <p style="color:var(--text-muted);margin-bottom:1rem">Application flow across all your job postings.</p>
-        <div class="grid-3">
-          <div class="card"><h3>Submitted</h3><p style="font-size:2rem;font-weight:800;color:var(--primary)">${stats.byStage?.submitted || 0}</p></div>
-          <div class="card"><h3>AI Screening</h3><p style="font-size:2rem;font-weight:800;color:var(--accent)">${stats.byStage?.ai_screening || 0}</p></div>
-          <div class="card"><h3>Shortlisted</h3><p style="font-size:2rem;font-weight:800;color:var(--success)">${stats.shortlisted || 0}</p></div>
-        </div>`;
+      const jobs = await api.getJobs('?mine=1');
+      jobSelect.innerHTML = jobs.map((j) => `<option value="${j.id}">${j.title}</option>`).join('');
+      if (jobParam) jobSelect.value = jobParam;
+      jobSelect.addEventListener('change', loadPipeline);
+      await loadPipeline();
     })();
   </script>
 </body>
