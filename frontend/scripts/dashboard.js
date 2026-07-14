@@ -18,7 +18,7 @@ function initSidebar(activePage) {
     logout.addEventListener('click', (e) => {
       e.preventDefault();
       clearAuth();
-      window.location.href = '../home/login.html';
+      window.location.href = page('home/login.html');
     });
   }
 
