@@ -4,21 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Candidates — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/dashboard.css" />
   <link rel="stylesheet" href="../assets/css/interactive.css" />
 </head>
-<body>
+<body class="portal-employer">
   <div class="dashboard-layout">
     <aside class="sidebar">
-      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><img src="../assets/images/logo-icon.svg" alt="" width="36" height="36" /><span class="logo-text">Reqruit <strong>IQ</strong></span></a></div>
+      <span class="sidebar-badge">Employer Portal</span>
       <nav class="sidebar-nav">
-        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="create-job.html" data-page="create-job"><span class="nav-icon">➕</span> Post Job</a>
-        <a href="candidates.html" data-page="candidates"><span class="nav-icon">👥</span> Candidates</a>
-        <a href="shortlist.html" data-page="shortlist"><span class="nav-icon">✅</span> Shortlisting</a>
-        <a href="rankings.html" data-page="rankings"><span class="nav-icon">🏆</span> AI Rankings</a>
-        <a href="reports.html" data-page="reports"><span class="nav-icon">📈</span> Reports</a>
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+        <a href="create-job.html" data-page="create-job"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span> Post Job</a>
+        <a href="candidates.html" data-page="candidates"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Candidates</a>
+        <a href="shortlist.html" data-page="shortlist"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> Shortlisting</a>
+        <a href="rankings.html" data-page="rankings"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7z"/></svg></span> AI Rankings</a>
+        <a href="reports.html" data-page="reports"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 5-6"/></svg></span> Reports</a>
       </nav>
       <div class="sidebar-footer">
         <div class="user-chip"><div class="user-avatar" id="user-avatar">E</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
@@ -49,13 +51,15 @@
                 <button class="filter-pill" data-filter="rejected">Rejected</button>
               </div>
             </div>
-            <div id="candidates-list">Loading...</div>
+            <div id="candidates-list" data-loader="Loading candidates..."></div>
           </div>
         </div>
       </div>
     </main>
   </div>
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
+  <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
   <script src="../scripts/employer-ui.js"></script>
   <script>
@@ -69,7 +73,7 @@
     async function loadCandidates() {
       const jobId = jobSelect.value;
       if (!jobId) { listEl.innerHTML = '<p>No jobs available.</p>'; return; }
-      listEl.innerHTML = '<p>Loading...</p>';
+      listEl.innerHTML = loaderMarkup({ message: 'Loading candidates...' });
       try {
         allApps = await api.jobApplications(jobId);
         window.onCandidateUpdated = () => loadCandidates();

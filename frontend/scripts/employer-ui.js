@@ -93,19 +93,22 @@ function renderKanban(pipeline, boardEl, jobId) {
 }
 
 async function openCandidateModal(applicationId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-header"><h2>Candidate</h2><button class="btn btn-ghost btn-sm" id="modal-close">✕</button></div>
+    <div class="modal-body" id="modal-body">${loaderMarkup({ message: 'Loading candidate...' })}</div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#modal-close').onclick = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
   try {
     const app = await api.getApplication(applicationId);
     const actions = STAGE_ACTIONS[app.status] || [];
     const analysis = app.analysis;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `<div class="modal">
-      <div class="modal-header">
-        <h2>${app.applicantName}</h2>
-        <button class="btn btn-ghost btn-sm" id="modal-close">✕</button>
-      </div>
-      <div class="modal-body">
+    overlay.querySelector('#modal-body').innerHTML = `
         <p><strong>Email:</strong> ${app.applicantEmail}</p>
         <p><strong>Job:</strong> ${app.jobTitle}</p>
         <p><strong>Status:</strong> <span class="badge badge-info">${app.stageLabel}</span></p>
@@ -125,17 +128,15 @@ async function openCandidateModal(applicationId) {
             </p>` : ''}
             ${analysis?.strengths?.length ? `<p><strong>Strengths:</strong> ${analysis.strengths.join(', ')}</p>` : ''}
             ${analysis?.weaknesses?.length ? `<p><strong>Gaps:</strong> ${analysis.weaknesses.join(', ')}</p>` : ''}
-          </div>` : '<p style="color:var(--text-muted)">Not yet analyzed by AI. Run AI Rankings first.</p>'}
-      </div>
+          </div>` : '<p style="color:var(--text-muted)">Not yet analyzed by AI. Run AI Rankings first.</p>'}`;
+
+    overlay.querySelector('.modal').insertAdjacentHTML('beforeend', `
       <div class="modal-footer">
         ${actions.map((a) => `<button class="btn btn-sm ${a.class}" data-status="${a.status}">${a.label}</button>`).join('')}
         <button class="btn btn-sm btn-accent" id="analyze-one">Analyze with AI</button>
-      </div>
-    </div>`;
+      </div>`);
 
-    document.body.appendChild(overlay);
-    overlay.querySelector('#modal-close').onclick = () => overlay.remove();
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelector('.modal-header h2').textContent = app.applicantName;
 
     overlay.querySelectorAll('[data-status]').forEach((btn) => {
       btn.addEventListener('click', async () => {
@@ -148,8 +149,7 @@ async function openCandidateModal(applicationId) {
     const analyzeBtn = overlay.querySelector('#analyze-one');
     if (analyzeBtn) {
       analyzeBtn.addEventListener('click', async () => {
-        analyzeBtn.textContent = 'Analyzing...';
-        analyzeBtn.disabled = true;
+        setButtonLoading(analyzeBtn, true, 'Analyze with AI', 'Analyzing...');
         await api.analyzeApplication(applicationId);
         overlay.remove();
         openCandidateModal(applicationId);
@@ -157,6 +157,7 @@ async function openCandidateModal(applicationId) {
       });
     }
   } catch (e) {
+    overlay.remove();
     alert(e.message);
   }
 }

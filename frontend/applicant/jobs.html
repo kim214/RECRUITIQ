@@ -4,20 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Browse Jobs — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <link rel="stylesheet" href="../assets/css/dashboard.css" />
   <link rel="stylesheet" href="../assets/css/interactive.css" />
   <link rel="stylesheet" href="../assets/css/applicant.css" />
 </head>
-<body>
+<body class="portal-applicant">
   <div class="dashboard-layout">
     <aside class="sidebar">
-      <div class="sidebar-header"><a href="../home/index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a></div>
+      <div class="sidebar-header"><a href="../home/index.html" class="logo"><img src="../assets/images/logo-icon.svg" alt="" width="36" height="36" /><span class="logo-text">Reqruit <strong>IQ</strong></span></a></div>
+      <span class="sidebar-badge">Applicant Portal</span>
       <nav class="sidebar-nav">
-        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="jobs.html" data-page="jobs"><span class="nav-icon">🔍</span> Browse Jobs</a>
-        <a href="applications.html" data-page="applications"><span class="nav-icon">📨</span> My Applications</a>
-        <a href="profile.html" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+        <a href="dashboard.html" data-page="dashboard"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+        <a href="jobs.html" data-page="jobs"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span> Browse Jobs</a>
+        <a href="applications.html" data-page="applications"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg></span> My Applications</a>
+        <a href="profile.html" data-page="profile"><span class="nav-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Profile</a>
       </nav>
       <div class="sidebar-footer">
         <div class="user-chip"><div class="user-avatar" id="user-avatar">A</div><div><div class="name" id="user-name"></div><div class="role" id="user-role"></div></div></div>
@@ -26,15 +28,21 @@
     </aside>
     <main class="dashboard-main">
       <header class="dashboard-topbar">
-        <h1>Browse Open Jobs</h1>
+        <div class="topbar-title-wrap">
+          <h1>Browse Open Jobs</h1>
+          <p class="topbar-subtitle">AI-matched roles from verified employers</p>
+        </div>
         <a href="applications.html" class="btn btn-outline btn-sm">My Applications</a>
       </header>
       <div class="dashboard-content">
-        <div class="applicant-welcome">
-          <h2>Find your next opportunity</h2>
-          <p>Browse open positions, upload your documents, and apply with one click.</p>
+        <div class="applicant-welcome dash-welcome">
+          <div class="dash-welcome-content">
+            <h2>Find your next opportunity</h2>
+            <p>Browse open positions, upload your documents, and apply with one click.</p>
+          </div>
+          <div class="dash-welcome-emoji" aria-hidden="true">🔍</div>
         </div>
-        <div id="jobs-list" class="job-cards-grid">Loading...</div>
+        <div id="jobs-list" class="job-cards-grid" data-loader="Loading jobs..."></div>
       </div>
     </main>
   </div>
@@ -82,6 +90,8 @@
   </div>
 
   <script src="../scripts/api.js"></script>
+  <script src="../scripts/loader.js"></script>
+  <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
   <script>
     requireAuth(['applicant']);
@@ -113,8 +123,7 @@
         alertEl.classList.remove('hidden');
         return;
       }
-      btn.textContent = 'Uploading documents...';
-      btn.disabled = true;
+      setButtonLoading(btn, true, 'Submit Application', 'Uploading documents...');
       try {
         const fd = new FormData();
         fd.append('resume', form.resume.files[0]);
@@ -122,7 +131,7 @@
         [...form.certificates.files].forEach(f => fd.append('certificates', f));
 
         const urls = await api.uploadDocuments(fd);
-        btn.textContent = 'Submitting application...';
+        btn.querySelector('.loader-message').textContent = 'Submitting application...';
 
         await api.applyToJob({
           jobId: form.jobId.value,
@@ -141,25 +150,27 @@
         alertEl.textContent = err.message;
         alertEl.classList.remove('hidden');
       } finally {
-        btn.textContent = 'Submit Application';
-        btn.disabled = false;
+        setButtonLoading(btn, false, 'Submit Application');
       }
     });
 
     async function loadJobs() {
       const el = document.getElementById('jobs-list');
+      showLoader(el, 'Loading jobs...');
+      el.className = 'job-cards-grid';
       try {
         const jobs = await api.getJobs();
         if (!jobs.length) {
           el.className = '';
-          el.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>No open jobs right now. Check back soon!</p></div>';
+          el.innerHTML = buildEmptyState('📋', 'No open jobs', 'Check back soon — employers are posting new roles regularly.');
           return;
         }
         el.className = 'job-cards-grid';
         el.innerHTML = jobs.map(j => `
           <div class="job-card">
+            <span class="job-badge">${j.employmentType || 'Full-time'}</span>
             <h3>${j.title}</h3>
-            <div class="meta">${j.location || 'Remote'} · ${j.employmentType || 'full-time'} · ${j.employerName || 'Company'}</div>
+            <div class="meta">📍 ${j.location || 'Remote'} · ${j.employerName || 'Company'}</div>
             <p class="description">${j.description?.slice(0, 180)}${j.description?.length > 180 ? '...' : ''}</p>
             <div class="skills">${(j.requiredSkills || []).map(s => `<span>${s}</span>`).join('')}</div>
             <div class="actions">

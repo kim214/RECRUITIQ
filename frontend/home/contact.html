@@ -3,21 +3,159 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Contact Reqruit IQ — get support, ask questions, or learn more about our platform." />
   <title>Contact — Reqruit IQ</title>
+  <link rel="icon" href="../assets/images/logo-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../assets/css/main.css" />
+  <link rel="stylesheet" href="../assets/css/home.css" />
+  <link rel="stylesheet" href="../assets/css/public-pages.css" />
 </head>
-<body>
-  <nav class="public-nav">
-    <a href="index.html" class="logo"><span class="logo-icon">IQ</span> Reqruit IQ</a>
-    <div class="nav-links"><a href="login.html" class="btn btn-primary btn-sm">Login</a></div>
+<body class="home-page">
+
+  <nav class="public-nav home-nav">
+    <a href="index.html" class="logo" aria-label="Reqruit IQ home">
+      <img src="../assets/images/logo-icon.svg" alt="" width="40" height="40" />
+      <span class="logo-text">Reqruit <strong>IQ</strong></span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="nav-links" id="nav-links">
+      <a href="features.html">Features</a>
+      <a href="index.html#how-it-works">How it works</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
   </nav>
-  <div class="container">
-    <h1>Contact Us</h1>
-    <div class="card" style="max-width:500px;margin-top:1.5rem">
-      <p><strong>Email:</strong> support@reqruitiq.com</p>
-      <p style="margin-top:0.5rem"><strong>Location:</strong> Nairobi, Kenya</p>
+
+  <section class="page-hero">
+    <div class="page-hero-inner">
+      <span class="section-label">Get in touch</span>
+      <h1>We'd love to hear from you</h1>
+      <p>Have a question about Reqruit IQ, need help with your account, or want to partner with us? Reach out anytime.</p>
+    </div>
+  </section>
+
+  <div class="page-body">
+    <div class="contact-layout">
+      <div class="contact-info-cards">
+        <div class="contact-info-card">
+          <div class="ci-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+          </div>
+          <div>
+            <h3>Email us</h3>
+            <p><a href="mailto:support@reqruitiq.com">support@reqruitiq.com</a></p>
+            <p style="margin-top:0.25rem;font-size:0.82rem">We typically respond within 24 hours.</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="ci-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <h3>Location</h3>
+            <p>Nairobi, Kenya</p>
+            <p style="margin-top:0.25rem;font-size:0.82rem">Serving teams and job seekers globally.</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="ci-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </div>
+          <div>
+            <h3>Support hours</h3>
+            <p>Monday – Friday, 9 AM – 6 PM EAT</p>
+            <p style="margin-top:0.25rem;font-size:0.82rem">Account &amp; technical support available.</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="ci-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <h3>Already a user?</h3>
+            <p><a href="login.html">Sign in to your dashboard</a> for account-specific help.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form-card">
+        <h2>Send us a message</h2>
+        <p>Fill out the form below and we'll get back to you as soon as possible.</p>
+        <div id="contact-alert" class="alert hidden"></div>
+        <form id="contact-form">
+          <div class="form-group">
+            <label>Your name</label>
+            <input type="text" name="name" class="form-control" required placeholder="John Doe" />
+          </div>
+          <div class="form-group">
+            <label>Email address</label>
+            <input type="email" name="email" class="form-control" required placeholder="you@company.com" />
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select name="subject" class="form-control">
+              <option>General inquiry</option>
+              <option>Technical support</option>
+              <option>Employer partnership</option>
+              <option>Feedback</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <textarea name="message" class="form-control" rows="5" required placeholder="How can we help you?" style="resize:vertical"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Send message</button>
+        </form>
+      </div>
     </div>
   </div>
-  <footer class="footer">&copy; 2026 Reqruit IQ</footer>
+
+  <footer class="home-footer">
+    <div class="home-footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <img src="../assets/images/logo-icon.svg" alt="" width="40" height="40" />
+          <span class="logo-text">Reqruit <strong>IQ</strong></span>
+        </a>
+        <p>AI-powered recruitment platform helping teams hire smarter and job seekers land the right roles faster.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="features.html">Features</a>
+        <a href="index.html#how-it-works">How it works</a>
+        <a href="index.html">Home</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About us</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <a href="login.html">Login</a>
+        <a href="register.html">Sign up</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Reqruit IQ. All rights reserved.</span>
+      <span>AI-powered recruitment platform</span>
+    </div>
+  </footer>
+
+  <script src="../scripts/public-nav.js"></script>
+  <script>
+    document.getElementById('contact-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('contact-alert');
+      alertEl.className = 'alert alert-success';
+      alertEl.textContent = 'Thank you! Your message has been received. We\'ll respond to your email shortly.';
+      alertEl.classList.remove('hidden');
+      e.target.reset();
+    });
+  </script>
 </body>
 </html>
