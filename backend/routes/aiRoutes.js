@@ -1,10 +1,21 @@
 const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
+const { analyzeApplication, prepareApplicationContext } = require('../lib/candidateAnalyzer');
 
 const router = express.Router();
-
 const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+
+function requestOrigin(req) {
+  if (req.headers.origin) return req.headers.origin;
+  if (req.headers.referer) {
+    try {
+      const u = new URL(req.headers.referer);
+      return `${u.protocol}//${u.host}`;
+    } catch { /* ignore */ }
+  }
+  return process.env.PUBLIC_APP_URL || 'http://localhost:3001';
+}
 
 async function callAiService(path, body) {
   try {
@@ -26,30 +37,10 @@ async function callAiService(path, body) {
   }
 }
 
-function localAnalyze(job, application, applicantProfile) {
-  const reqSkills = (job.requiredSkills || job.required_skills || []).map((s) => s.toLowerCase());
-  const candSkills = (applicantProfile?.skills || ['JavaScript', 'React', 'Node.js']).map((s) => s.toLowerCase());
-  const matched = reqSkills.filter((s) => candSkills.some((c) => c.includes(s) || s.includes(c)));
-  const missing = reqSkills.filter((s) => !matched.includes(s));
-  const skillScore = reqSkills.length ? Math.round((matched.length / reqSkills.length) * 100) : 70;
-  const expYears = applicantProfile?.total_experience_years || 2;
-  const reqExp = job.minExperience || job.experience_years || 0;
-  const expScore = expYears >= reqExp ? Math.min(100, 70 + (expYears - reqExp) * 10) : Math.max(30, 50 + expYears * 10);
-  const eduScore = job.requiredEducation ? 85 : 90;
-  const overall = Math.round((skillScore * 0.5) + (expScore * 0.3) + (eduScore * 0.2));
-  const recommendation = overall >= 85 ? 'strong_yes' : overall >= 70 ? 'yes' : overall >= 50 ? 'maybe' : 'no';
-
-  return {
-    overall_score: overall,
-    skills_match: { score: skillScore, matched, missing, partial: [] },
-    education_match: { score: eduScore, meets_requirement: true, details: job.requiredEducation || 'No specific requirement' },
-    experience_match: { score: expScore, candidate_years: expYears, required_years: reqExp, details: `${expYears} years vs ${reqExp} required` },
-    ai_summary: `${applicantProfile?.full_name || 'Candidate'} scores ${overall}% for ${job.title}. Skills match: ${matched.join(', ') || 'partial'}. ${missing.length ? `Missing: ${missing.join(', ')}.` : ''}`,
-    strengths: matched.length ? [`Strong in ${matched.slice(0, 3).join(', ')}`] : ['Relevant background'],
-    weaknesses: missing.length ? [`Gap in ${missing.slice(0, 2).join(', ')}`] : [],
-    recommendation,
-    model_version: 'local-fallback',
-  };
+async function analyzeWithDocuments(job, app, req) {
+  const context = await prepareApplicationContext(app, { apiOrigin: requestOrigin(req) });
+  const analysis = analyzeApplication(job, app, { full_name: app.applicantName }, context);
+  return { analysis, context };
 }
 
 router.post('/analyze/:applicationId', requireRole('employer', 'admin'), async (req, res) => {
@@ -59,14 +50,19 @@ router.post('/analyze/:applicationId', requireRole('employer', 'admin'), async (
     if (!app) return res.status(404).json({ message: 'Application not found' });
     const job = await db.getJob(app.jobId);
 
+    const { context, analysis: localAnalysis } = await analyzeWithDocuments(job, app, req);
+    const profileText = context.combinedText || app.coverLetter || app.cover_letter || '';
+
     let result = await callAiService(`/analyze/${req.params.applicationId}`, {
       job,
       application: app,
-      profile_text: app.coverLetter || app.cover_letter || '',
+      profile_text: profileText,
     });
+
     if (!result) {
-      result = { analysis: localAnalyze(job, app, { full_name: app.applicantName, skills: job.requiredSkills?.slice(0, 3) }) };
+      result = { analysis: localAnalysis };
     }
+
     const analysis = result.analysis || result;
     const saved = await db.saveAnalysis({
       application_id: app.id,
@@ -87,13 +83,26 @@ router.post('/rank/:jobId', requireRole('employer', 'admin'), async (req, res) =
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
     const apps = await db.listApplications({ jobId: req.params.jobId });
-    let rankings = await callAiService(`/rank/${req.params.jobId}`, { job, applications: apps });
+    const enrichedApps = [];
+
+    for (const app of apps) {
+      const { context, analysis } = await analyzeWithDocuments(job, app, req);
+      enrichedApps.push({
+        ...app,
+        profile_text: context.combinedText,
+        documents_reviewed: context.documentMeta?.parsedLabels || [],
+        _context: context,
+        _analysis: analysis,
+      });
+    }
+
+    let rankings = await callAiService(`/rank/${req.params.jobId}`, { job, applications: enrichedApps });
+
     if (!rankings) {
       const results = [];
-      for (const app of apps) {
-        const analysis = localAnalyze(job, app, { full_name: app.applicantName });
-        await db.saveAnalysis({ application_id: app.id, job_id: job.id, ...analysis });
-        results.push({ ...app, aiScore: analysis.overall_score, analysis });
+      for (const app of enrichedApps) {
+        await db.saveAnalysis({ application_id: app.id, job_id: job.id, ...app._analysis });
+        results.push({ ...app, aiScore: app._analysis.overall_score, analysis: app._analysis });
       }
       results.sort((a, b) => b.aiScore - a.aiScore);
       rankings = { rankings: results };
