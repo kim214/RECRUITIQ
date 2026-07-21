@@ -44,6 +44,7 @@
         <a href="create-job.html" class="btn btn-primary btn-sm">+ Post New Job</a>
       </header>
       <div class="dashboard-content">
+        <div id="account-banner" class="alert alert-info hidden" style="margin-bottom:1rem"></div>
         <div class="employer-welcome dash-welcome" id="welcome"></div>
         <p class="page-section-title">Overview</p>
         <div class="stats-grid" id="stats-grid">
@@ -96,7 +97,6 @@
   <script src="../scripts/api.js"></script>
   <script src="../scripts/loader.js"></script>
   <script src="../scripts/portal-ui.js"></script>
-  <script src="../scripts/employer-jobs.js"></script>
   <script src="../scripts/dashboard.js"></script>
   <script src="../scripts/employer-jobs.js"></script>
   <script src="../scripts/employer-ui.js"></script>
@@ -104,6 +104,11 @@
     requireAuth(['employer']);
     initSidebar('dashboard');
     const user = getUser();
+    const banner = document.getElementById('account-banner');
+    if (user?.email) {
+      banner.textContent = `Viewing jobs for: ${user.email} — new jobs only appear under the account that creates them.`;
+      banner.classList.remove('hidden');
+    }
     document.getElementById('welcome').innerHTML = buildWelcomeBanner(
       `Welcome back, ${user?.fullName || 'Employer'}!`,
       'Manage your jobs, review AI-ranked candidates, and move applicants through your hiring pipeline.',
@@ -111,6 +116,8 @@
     );
 
     async function loadDashboard() {
+      const jobsEl = document.getElementById('jobs-list');
+      showLoader(jobsEl, 'Loading jobs...');
       try {
         const [stats, jobs, activity] = await Promise.all([
           api.employerStats(), api.getMyJobs(), api.getActivity(),

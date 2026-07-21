@@ -31,6 +31,7 @@
       <div class="dashboard-content">
         <div class="panel" style="max-width:720px">
           <div class="panel-body">
+            <div id="post-as-banner" class="alert alert-info" style="margin-bottom:1rem"></div>
             <div id="form-alert" class="alert hidden"></div>
             <form id="job-form">
               <div class="form-group">
@@ -85,6 +86,9 @@
   <script>
     requireAuth(['employer']);
     initSidebar('create-job');
+    const u = getUser();
+    document.getElementById('post-as-banner').textContent =
+      u?.email ? `Publishing as: ${u.email}` : 'Publishing as employer';
     document.getElementById('job-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const f = e.target;

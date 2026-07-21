@@ -27,6 +27,18 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/mine', requireRole('employer'), async (req, res) => {
+  try {
+    noCache(res);
+    const db = getDb();
+    const employerId = await resolveUserId(req);
+    const jobs = await db.listJobs({ employerId });
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     noCache(res);

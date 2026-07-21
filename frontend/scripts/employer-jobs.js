@@ -1,7 +1,7 @@
 /** Shared employer job list — always fetches fresh data after posting a job. */
 
 async function fetchEmployerJobs() {
-  return api.getJobs('?mine=1');
+  return api.getMyJobs();
 }
 
 async function populateJobSelect(selectEl, options = {}) {

@@ -2,7 +2,8 @@ const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
 const { analyzeApplication, prepareApplicationContext } = require('../lib/candidateAnalyzer');
-const { isLlmAvailable, analyzeWithLlm, getActiveProviderInfo } = require('../lib/llmAnalyzer');
+const { isLlmAvailable, getActiveProviderInfo } = require('../lib/llmAnalyzer');
+const { runHybridAnalysis } = require('../lib/hybridAnalyzer');
 
 const router = express.Router();
 const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
@@ -46,8 +47,13 @@ async function analyzeWithDocuments(job, app, req) {
 }
 
 async function runAnalysis(job, app, req) {
-  const { context, analysis: ruleAnalysis } = await analyzeWithDocuments(job, app, req);
+  const { context, analysis: evidenceAnalysis } = await analyzeWithDocuments(job, app, req);
   const profileText = context.combinedText || app.coverLetter || app.cover_letter || '';
+
+  if (isLlmAvailable()) {
+    const hybrid = await runHybridAnalysis(job, app, profileText, context.documentMeta, evidenceAnalysis);
+    return { analysis: hybrid, context };
+  }
 
   const serviceResult = await callAiService(`/analyze/${app.id}`, {
     job,
@@ -58,12 +64,7 @@ async function runAnalysis(job, app, req) {
     return { analysis: serviceResult.analysis, context };
   }
 
-  if (isLlmAvailable()) {
-    const llmAnalysis = await analyzeWithLlm(job, app, profileText, context.documentMeta);
-    if (llmAnalysis) return { analysis: llmAnalysis, context };
-  }
-
-  return { analysis: ruleAnalysis, context };
+  return { analysis: evidenceAnalysis, context };
 }
 
 router.get('/status', requireRole('employer', 'admin'), (_req, res) => {

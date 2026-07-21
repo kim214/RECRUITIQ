@@ -17,6 +17,15 @@ const SKILL_ALIASES = {
   mongo: 'mongodb',
   aws: 'amazon web services',
   gcp: 'google cloud',
+  ms: 'microsoft',
+  'ms office': 'microsoft office',
+  excel: 'microsoft excel',
+  seo: 'search engine optimization',
+  crm: 'customer relationship management',
+  ict: 'information technology',
+  hr: 'human resources',
+  ui: 'user interface',
+  ux: 'user experience',
 };
 
 const EDUCATION_LEVELS = [
@@ -39,21 +48,31 @@ function tokenizeSkill(skill) {
   return normalizeSkill(skill).split(/[\s/|]+/).filter(Boolean);
 }
 
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function skillMentioned(requiredSkill, text) {
   const norm = normalizeSkill(requiredSkill);
   if (!norm) return 'missing';
+
+  if (new RegExp(`\\b${escapeRegex(norm)}\\b`, 'i').test(text)) return 'matched';
+
   if (text.includes(norm)) return 'matched';
 
   const tokens = tokenizeSkill(requiredSkill);
-  const hits = tokens.filter((t) => t.length > 2 && text.includes(t));
-  if (hits.length === tokens.length) return 'matched';
+  const hits = tokens.filter((t) => t.length > 2 && (new RegExp(`\\b${escapeRegex(t)}\\b`, 'i').test(text) || text.includes(t)));
+  if (hits.length === tokens.length && tokens.length) return 'matched';
   if (hits.length > 0) return 'partial';
 
   for (const [alias, canonical] of Object.entries(SKILL_ALIASES)) {
-    if (canonical === norm || norm.includes(canonical)) {
-      if (text.includes(alias) || text.includes(canonical)) return 'matched';
+    if (canonical === norm || norm.includes(canonical) || alias === norm) {
+      if (new RegExp(`\\b${escapeRegex(alias)}\\b`, 'i').test(text) || text.includes(canonical)) return 'matched';
     }
   }
+
+  const words = norm.split(' ').filter((w) => w.length > 3);
+  if (words.length > 1 && words.every((w) => text.includes(w))) return 'partial';
 
   return 'missing';
 }
@@ -448,7 +467,7 @@ function analyzeApplication(job, application, applicantProfile = {}, context = {
     strengths: strengths.length ? strengths : ['Review application documents manually'],
     weaknesses: weaknesses.length ? weaknesses : ['No major gaps identified from available documents'],
     recommendation,
-    model_version: 'document-aware-v3',
+    model_version: 'document-aware-v4',
     data_quality: dataQuality,
     documents_reviewed: docMeta?.parsedLabels || [],
     documents_failed: docMeta?.failedLabels || [],
