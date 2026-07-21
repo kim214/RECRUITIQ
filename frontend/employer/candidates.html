@@ -61,6 +61,7 @@
   <script src="../scripts/loader.js"></script>
   <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
+  <script src="../scripts/employer-jobs.js"></script>
   <script src="../scripts/employer-ui.js"></script>
   <script>
     requireAuth(['employer']);
@@ -83,16 +84,22 @@
       }
     }
 
+    window.reloadEmployerJobs = async () => {
+      const jobs = await populateJobSelect(jobSelect, { selectedId: jobSelect.value });
+      if (!jobs.length) {
+        listEl.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No jobs posted. <a href="create-job.html">Post a job</a> first to receive applications.</p></div>';
+        return;
+      }
+      await loadCandidates();
+    };
+
     (async () => {
       try {
-        const jobs = await api.getJobs('?mine=1');
+        const jobs = await populateJobSelect(jobSelect, { selectedId: jobIdParam });
         if (!jobs.length) {
-          jobSelect.innerHTML = '<option value="">No jobs posted yet</option>';
           listEl.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No jobs posted. <a href="create-job.html">Post a job</a> first to receive applications.</p></div>';
           return;
         }
-        jobSelect.innerHTML = jobs.map((j) => `<option value="${j.id}">${j.title} (${j.applicationCount || 0} apps)</option>`).join('');
-        if (jobIdParam) jobSelect.value = jobIdParam;
         jobSelect.addEventListener('change', loadCandidates);
         await loadCandidates();
       } catch (e) {

@@ -27,7 +27,9 @@ function initSidebar(activePage) {
 
   // Refresh user from server to fix stale tokens after DB migration
   api.me().then((fresh) => {
-    setAuth(getToken(), fresh);
+    const token = fresh.token || getToken();
+    const { token: _t, ...user } = fresh;
+    setAuth(token, user);
     const name = document.getElementById('user-name');
     const avatar = document.getElementById('user-avatar');
     if (name) name.textContent = fresh.fullName || fresh.email;

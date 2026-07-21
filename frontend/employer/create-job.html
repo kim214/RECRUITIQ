@@ -81,6 +81,7 @@
   <script src="../scripts/loader.js"></script>
   <script src="../scripts/portal-ui.js"></script>
   <script src="../scripts/dashboard.js"></script>
+  <script src="../scripts/employer-jobs.js"></script>
   <script>
     requireAuth(['employer']);
     initSidebar('create-job');
@@ -93,7 +94,7 @@
       try {
         const skills = f.requiredSkills.value.split(',').map((s) => s.trim()).filter(Boolean);
         const certs = f.requiredCertifications.value.split(',').map((s) => s.trim()).filter(Boolean);
-        await api.createJob({
+        const job = await api.createJob({
           title: f.title.value,
           location: f.location.value,
           employmentType: f.employmentType.value,
@@ -103,11 +104,12 @@
           requiredEducation: f.requiredEducation.value,
           requiredCertifications: certs,
         });
+        markJobsUpdated(job.id);
         alertEl.className = 'alert alert-success';
-        alertEl.textContent = 'Job published successfully!';
+        alertEl.textContent = 'Job published successfully! Redirecting...';
         alertEl.classList.remove('hidden');
         f.reset();
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+        setTimeout(() => { window.location.href = `dashboard.html?job=${job.id}`; }, 800);
       } catch (err) {
         alertEl.className = 'alert alert-error';
         alertEl.textContent = err.message;

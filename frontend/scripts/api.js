@@ -40,7 +40,11 @@ async function apiRequest(path, options = {}) {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, {
+    cache: 'no-store',
+    ...options,
+    headers,
+  });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) {
     clearAuth();
@@ -60,7 +64,12 @@ const api = {
   adminStats: () => apiRequest('/stats/admin'),
   employerStats: () => apiRequest('/stats/employer'),
   getActivity: () => apiRequest('/activity'),
-  getJobs: (query = '') => apiRequest(`/jobs${query}`),
+  getJobs: (query = '') => {
+    const q = query.startsWith('?') ? query : (query ? `?${query}` : '');
+    const sep = q.includes('?') ? '&' : '?';
+    return apiRequest(`/jobs${q}${sep}_t=${Date.now()}`);
+  },
+  getMyJobs: () => apiRequest(`/jobs?mine=1&_t=${Date.now()}`),
   getJob: (id) => apiRequest(`/jobs/${id}`),
   createJob: (data) => apiRequest('/jobs', { method: 'POST', body: JSON.stringify(data) }),
   getApplications: () => apiRequest('/applications'),

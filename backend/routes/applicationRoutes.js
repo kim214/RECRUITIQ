@@ -1,15 +1,17 @@
 const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
+const { resolveUserId } = require('../lib/resolveUser');
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
     const db = getDb();
+    const userId = await resolveUserId(req);
     const opts = {};
-    if (req.user.role === 'applicant') opts.applicantId = req.user.id;
-    if (req.user.role === 'employer') opts.employerId = req.user.id;
+    if (req.user.role === 'applicant') opts.applicantId = userId;
+    if (req.user.role === 'employer') opts.employerId = userId;
     if (req.query.jobId) opts.jobId = req.query.jobId;
     const apps = await db.listApplications(opts);
     res.json(apps);
@@ -22,17 +24,18 @@ router.get('/', async (req, res) => {
 router.get('/job/:jobId', requireRole('employer', 'admin'), async (req, res) => {
   try {
     const db = getDb();
+    const employerId = await resolveUserId(req);
     if (req.user.role === 'employer') {
-      const owns = await db.employerOwnsJob(req.user.id, req.params.jobId);
+      const owns = await db.employerOwnsJob(employerId, req.params.jobId);
       if (!owns) {
         return res.status(403).json({
-          message: 'This job belongs to another employer account. Log in with the account that posted the job, or run: cd backend && npm run assign:employer',
+          message: 'This job belongs to another employer account. Log in with the account that posted the job.',
         });
       }
     }
     const apps = await db.listApplications({
       jobId: req.params.jobId,
-      employerId: req.user.role === 'employer' ? req.user.id : undefined,
+      employerId: req.user.role === 'employer' ? employerId : undefined,
     });
     res.json(apps);
   } catch (err) {
@@ -43,7 +46,8 @@ router.get('/job/:jobId', requireRole('employer', 'admin'), async (req, res) => 
 router.get('/pipeline/:jobId', requireRole('employer'), async (req, res) => {
   try {
     const db = getDb();
-    const owns = await db.employerOwnsJob(req.user.id, req.params.jobId);
+    const employerId = await resolveUserId(req);
+    const owns = await db.employerOwnsJob(employerId, req.params.jobId);
     if (!owns) {
       return res.status(403).json({
         message: 'This job belongs to another employer account. Log in with the account that posted the job.',

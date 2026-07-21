@@ -96,7 +96,9 @@
   <script src="../scripts/api.js"></script>
   <script src="../scripts/loader.js"></script>
   <script src="../scripts/portal-ui.js"></script>
+  <script src="../scripts/employer-jobs.js"></script>
   <script src="../scripts/dashboard.js"></script>
+  <script src="../scripts/employer-jobs.js"></script>
   <script src="../scripts/employer-ui.js"></script>
   <script>
     requireAuth(['employer']);
@@ -107,10 +109,11 @@
       'Manage your jobs, review AI-ranked candidates, and move applicants through your hiring pipeline.',
       '💼'
     );
-    (async () => {
+
+    async function loadDashboard() {
       try {
         const [stats, jobs, activity] = await Promise.all([
-          api.employerStats(), api.getJobs('?mine=1'), api.getActivity(),
+          api.employerStats(), api.getMyJobs(), api.getActivity(),
         ]);
         document.getElementById('stat-jobs').textContent = stats.activeJobs;
         document.getElementById('stat-apps').textContent = stats.totalApplications;
@@ -165,10 +168,18 @@
             </td>
           </tr>`).join('')}
         </tbody></table>`;
+        const highlightJob = new URLSearchParams(window.location.search).get('job');
+        if (highlightJob) {
+          const row = el.querySelector(`a[href*="job=${highlightJob}"]`)?.closest('tr');
+          if (row) row.style.background = 'rgba(99,102,241,0.08)';
+        }
       } catch (e) {
         document.getElementById('jobs-list').innerHTML = `<p class="alert alert-error">${e.message}</p>`;
       }
-    })();
+    }
+
+    window.reloadEmployerJobs = loadDashboard;
+    loadDashboard();
   </script>
 </body>
 </html>
