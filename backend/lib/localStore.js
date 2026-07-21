@@ -243,6 +243,12 @@ const localStore = {
     return job ? mapJob(job, db.users, counts) : null;
   },
 
+  async employerOwnsJob(employerId, jobId) {
+    const db = read();
+    const job = db.jobs.find((j) => j.id === jobId);
+    return !!job && job.employer_id === employerId;
+  },
+
   async createJob(employerId, data) {
     const db = read();
     const job = {

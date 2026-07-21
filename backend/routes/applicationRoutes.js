@@ -22,7 +22,18 @@ router.get('/', async (req, res) => {
 router.get('/job/:jobId', requireRole('employer', 'admin'), async (req, res) => {
   try {
     const db = getDb();
-    const apps = await db.listApplications({ jobId: req.params.jobId, employerId: req.user.role === 'employer' ? req.user.id : undefined });
+    if (req.user.role === 'employer') {
+      const owns = await db.employerOwnsJob(req.user.id, req.params.jobId);
+      if (!owns) {
+        return res.status(403).json({
+          message: 'This job belongs to another employer account. Log in with the account that posted the job, or run: cd backend && npm run assign:employer',
+        });
+      }
+    }
+    const apps = await db.listApplications({
+      jobId: req.params.jobId,
+      employerId: req.user.role === 'employer' ? req.user.id : undefined,
+    });
     res.json(apps);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -32,6 +43,12 @@ router.get('/job/:jobId', requireRole('employer', 'admin'), async (req, res) => 
 router.get('/pipeline/:jobId', requireRole('employer'), async (req, res) => {
   try {
     const db = getDb();
+    const owns = await db.employerOwnsJob(req.user.id, req.params.jobId);
+    if (!owns) {
+      return res.status(403).json({
+        message: 'This job belongs to another employer account. Log in with the account that posted the job.',
+      });
+    }
     const pipeline = await db.getPipeline(req.params.jobId);
     res.json(pipeline);
   } catch (err) {
