@@ -2,26 +2,60 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { createClient } = require('@supabase/supabase-js');
 const { requireRole } = require('../middleware/auth');
+const {
+  BUCKET_NAME,
+  getStorageClient,
+  ensureResumesBucket,
+  friendlyUploadError,
+  isBucketMissingError,
+} = require('../lib/storage');
 
 const router = express.Router();
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 const useSupabaseStorage = !!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
 
-function getSupabase() {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+let bucketReady = false;
+let bucketInitPromise = null;
+
+async function initBucketOnce() {
+  if (bucketReady) return;
+  if (!bucketInitPromise) {
+    bucketInitPromise = ensureResumesBucket()
+      .then(() => { bucketReady = true; })
+      .catch((err) => {
+        bucketInitPromise = null;
+        throw err;
+      });
+  }
+  await bucketInitPromise;
 }
 
 async function uploadToSupabase(userId, file, folder) {
-  const supabase = getSupabase();
+  const supabase = getStorageClient();
+  if (!supabase) {
+    throw new Error('Supabase Storage is not configured.');
+  }
+
+  await initBucketOnce();
+
   const ext = path.extname(file.originalname);
   const filename = `${userId}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-  const { data, error } = await supabase.storage
-    .from('resumes')
+  let { data, error } = await supabase.storage
+    .from(BUCKET_NAME)
     .upload(filename, file.buffer, { contentType: file.mimetype, upsert: false });
+
+  if (error && isBucketMissingError(error)) {
+    bucketReady = false;
+    bucketInitPromise = null;
+    await initBucketOnce();
+    ({ data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(filename, file.buffer, { contentType: file.mimetype, upsert: false }));
+  }
+
   if (error) throw error;
-  const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(data.path);
+  const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
   return urlData.publicUrl;
 }
 
@@ -69,7 +103,9 @@ router.post('/', requireRole('applicant'), upload.fields([
 
     if (process.env.VERCEL || useSupabaseStorage) {
       if (!useSupabaseStorage) {
-        return res.status(500).json({ message: 'File upload requires Supabase Storage on Vercel. Create a "resumes" bucket in Supabase.' });
+        return res.status(500).json({
+          message: 'File upload requires Supabase on Vercel. Set SUPABASE_URL and SUPABASE_SERVICE_KEY in Vercel env vars, then create a public "resumes" storage bucket.',
+        });
       }
       if (req.files?.resume?.[0]) {
         urls.resumeUrl = await uploadToSupabase(req.user.id, req.files.resume[0], 'resume');
@@ -93,7 +129,7 @@ router.post('/', requireRole('applicant'), upload.fields([
 
     res.json(urls);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: friendlyUploadError(err) });
   }
 });
 
