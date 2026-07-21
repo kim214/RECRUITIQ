@@ -112,6 +112,8 @@ async function openCandidateModal(applicationId) {
         <p><strong>Email:</strong> ${app.applicantEmail}</p>
         <p><strong>Job:</strong> ${app.jobTitle}</p>
         <p><strong>Status:</strong> <span class="badge badge-info">${app.stageLabel}</span></p>
+        ${analysis?.documentsReviewed?.length ? `<p><strong>Documents reviewed:</strong> ${analysis.documentsReviewed.join(', ')}</p>` : ''}
+        ${analysis?.documentsFailed?.length ? `<p style="color:var(--warning,#b45309)"><strong>Could not read:</strong> ${analysis.documentsFailed.join(', ')}</p>` : ''}
         ${app.coverLetter ? `<p><strong>Cover Letter:</strong><br>${app.coverLetter}</p>` : ''}
         <div class="doc-links" style="margin:0.75rem 0">
           ${app.resumeUrl ? `<a href="${app.resumeUrl}" target="_blank" class="btn btn-sm btn-outline">📄 Resume</a>` : ''}
@@ -121,13 +123,16 @@ async function openCandidateModal(applicationId) {
         ${app.aiScore != null ? `
           <div class="ai-breakdown">
             <h4>AI Match Score: ${Math.round(app.aiScore)}%</h4>
-            ${analysis?.summary ? `<p>${analysis.summary}</p>` : ''}
-            ${analysis?.skillsMatch ? `<p><strong>Skills:</strong>
+            ${analysis?.summary ? `<p>${analysis.summary}</p>` : (analysis?.aiSummary ? `<p>${analysis.aiSummary}</p>` : '')}
+            ${analysis?.skillsMatch ? `<p><strong>Skills (${Math.round(analysis.skillsMatch.score ?? analysis.skillsMatchScore ?? 0)}%):</strong>
               ${(analysis.skillsMatch.matched || []).map((s) => `<span class="ai-tag match">${s}</span>`).join('')}
+              ${(analysis.skillsMatch.partial || []).map((s) => `<span class="ai-tag partial">${s} (partial)</span>`).join('')}
               ${(analysis.skillsMatch.missing || []).map((s) => `<span class="ai-tag miss">${s}</span>`).join('')}
             </p>` : ''}
-            ${analysis?.strengths?.length ? `<p><strong>Strengths:</strong> ${analysis.strengths.join(', ')}</p>` : ''}
-            ${analysis?.weaknesses?.length ? `<p><strong>Gaps:</strong> ${analysis.weaknesses.join(', ')}</p>` : ''}
+            ${analysis?.experienceMatch?.details ? `<p><strong>Experience (${Math.round(analysis.experienceMatch.score ?? 0)}%):</strong> ${analysis.experienceMatch.details}</p>` : ''}
+            ${analysis?.educationMatch?.details ? `<p><strong>Education (${Math.round(analysis.educationMatch.score ?? 0)}%):</strong> ${analysis.educationMatch.details}</p>` : ''}
+            ${analysis?.strengths?.length ? `<p><strong>Strengths:</strong> ${analysis.strengths.join('; ')}</p>` : ''}
+            ${analysis?.weaknesses?.length ? `<p><strong>Gaps:</strong> ${analysis.weaknesses.join('; ')}</p>` : ''}
           </div>` : '<p style="color:var(--text-muted)">Not yet analyzed by AI. Run AI Rankings first.</p>'}`;
 
     overlay.querySelector('.modal').insertAdjacentHTML('beforeend', `

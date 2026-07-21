@@ -19,11 +19,15 @@ def rank_applications(job: dict, applications: list) -> list:
     results = []
     for app in applications:
         profile = parse_document(
-            app.get("cover_letter") or app.get("coverLetter") or "",
+            app.get("cover_letter") or app.get("coverLetter") or app.get("profile_text") or "",
             fallback_name=app.get("applicantName") or app.get("applicant_name") or "Candidate",
         )
-        if app.get("skills"):
-            profile["skills"] = app["skills"]
+        profile["raw_text"] = (
+            app.get("profile_text")
+            or app.get("cover_letter")
+            or app.get("coverLetter")
+            or profile.get("raw_text", "")
+        )
         analysis = match_candidate(job, profile)
         results.append({
             "application_id": app.get("id"),

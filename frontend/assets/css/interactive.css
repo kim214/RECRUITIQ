@@ -257,6 +257,7 @@
   margin: 0.15rem;
 }
 .ai-tag.match { background: #d1fae5; color: #065f46; }
+.ai-tag.partial { background: #fef3c7; color: #92400e; }
 .ai-tag.miss { background: #fee2e2; color: #991b1b; }
 
 @media (max-width: 768px) {

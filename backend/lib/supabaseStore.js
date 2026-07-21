@@ -102,6 +102,8 @@ function mapApplication(row, applicant, job, analysis) {
       weaknesses: analysis.weaknesses,
       recommendation: analysis.recommendation,
       summary: analysis.ai_summary,
+      documentsReviewed: analysis.skills_match?.documentsReviewed || analysis.documents_reviewed || [],
+      documentsFailed: analysis.skills_match?.documentsFailed || analysis.documents_failed || [],
     } : null,
   };
 }
@@ -290,7 +292,11 @@ const supabaseStore = {
       application_id: analysis.application_id,
       job_id: analysis.job_id,
       overall_score: analysis.overall_score,
-      skills_match: analysis.skills_match,
+      skills_match: {
+        ...(analysis.skills_match || {}),
+        documentsReviewed: analysis.documents_reviewed || [],
+        documentsFailed: analysis.documents_failed || [],
+      },
       education_match: analysis.education_match,
       experience_match: analysis.experience_match,
       ai_summary: analysis.ai_summary,
