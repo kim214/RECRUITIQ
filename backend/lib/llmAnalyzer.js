@@ -1,40 +1,76 @@
 /**
- * LLM-powered candidate analysis (OpenAI, Groq, Gemini, Ollama).
- * Works on Vercel — no Python service required when an API key is set.
+ * LLM layer for hybrid analysis — semantic review + professional narrative.
  */
+function recommendationFromScore(score) {
+  if (score >= 82) return 'strong_yes';
+  if (score >= 68) return 'yes';
+  if (score >= 48) return 'maybe';
+  return 'no';
+}
 
-const MATCHER_SYSTEM = `You are an expert recruitment analyst. Score candidates ONLY from evidence in their profile text and parsed documents.
-Rules:
-- Never invent skills, degrees, or years of experience not present in the text.
-- If information is missing, score that dimension low and explain what is missing.
-- skills score = (matched required skills / total required) * 100, with partial credit for related skills.
-- overall_score = weighted average: skills 45%, experience 30%, education 15%, certifications 10%.
-- Be conservative when data is sparse.
-Return valid JSON only:
+const HYBRID_SYSTEM = `You are a senior recruitment analyst. You receive PRE-COMPUTED EVIDENCE from parsed resumes and job requirements.
+
+YOUR TASKS:
+1. Review the application text for required skills marked "missing" or "partial" — if clearly present under different wording, add them to skill_adjustments with a short quote from the text.
+2. Do NOT invent qualifications not supported by the application text.
+3. Do NOT contradict the evidence scores for experience/education unless the text clearly proves the evidence is wrong — if so, explain in weaknesses only.
+4. Write a specific, professional summary (3-5 sentences) citing concrete facts from documents.
+5. List 3-5 evidence-based strengths and 3-5 gaps/weaknesses.
+6. Give hiring recommendation aligned with the evidence overall score.
+
+Return ONLY valid JSON:
 {
-  "overall_score": number,
-  "skills_match": { "score": number, "matched": [], "missing": [], "partial": [] },
-  "education_match": { "score": number, "meets_requirement": boolean, "details": string },
-  "experience_match": { "score": number, "candidate_years": number|null, "required_years": number, "details": string },
-  "strengths": [],
-  "weaknesses": [],
-  "recommendation": "strong_yes"|"yes"|"maybe"|"no",
-  "summary": string
+  "skill_adjustments": {
+    "add_to_matched": [{"skill": "exact required skill name", "quote": "exact phrase from application"}],
+    "add_to_partial": [{"skill": "skill name", "quote": "phrase"}]
+  },
+  "summary": "detailed paragraph",
+  "strengths": ["specific strength with evidence"],
+  "weaknesses": ["specific gap with evidence"],
+  "recommendation": "strong_yes|yes|maybe|no"
 }`;
 
-function buildUserPrompt(job, applicantName, profileText) {
-  return `Job Requirements:
+function buildEvidenceBlock(job, applicantName, evidence) {
+  const sm = evidence.skills_match || {};
+  const em = evidence.experience_match || {};
+  const ed = evidence.education_match || {};
+  return `EVIDENCE REPORT (from document parsing — treat as ground truth for scoring):
+Candidate: ${applicantName || 'Unknown'}
+Overall score (computed): ${evidence.overall_score}%
+Data quality: ${evidence.data_quality || 'unknown'}
+Documents parsed: ${(evidence.documents_reviewed || []).join(', ') || 'none'}
+Documents failed: ${(evidence.documents_failed || []).join(', ') || 'none'}
+
+Skills (${sm.score ?? 0}%):
+- Matched: ${(sm.matched || []).join(', ') || 'none'}
+- Partial: ${(sm.partial || []).join(', ') || 'none'}
+- Missing: ${(sm.missing || []).join(', ') || 'none'}
+
+Experience (${em.score ?? 0}%): ${em.details || 'N/A'}
+Education (${ed.score ?? 0}%): ${ed.details || 'N/A'}
+Meets education requirement: ${ed.meets_requirement ? 'yes' : 'no'}`;
+}
+
+function buildUserPrompt(job, applicantName, profileText, evidence) {
+  const reqSkills = job.requiredSkills || job.required_skills || [];
+  return `${buildEvidenceBlock(job, applicantName, evidence)}
+
+JOB POSTING:
 Title: ${job.title}
-Description: ${(job.description || '').slice(0, 2000)}
-Required skills: ${JSON.stringify(job.requiredSkills || job.required_skills || [])}
-Required education: ${job.requiredEducation || job.required_education || 'None specified'}
-Experience years required: ${job.minExperience ?? job.experience_years ?? 0}
+Location: ${job.location || 'Not specified'}
+Type: ${job.employmentType || job.employment_type || 'full-time'}
+Description:
+${(job.description || '').slice(0, 4000)}
+
+Required skills (exact names for adjustments): ${JSON.stringify(reqSkills)}
+Required education: ${job.requiredEducation || job.required_education || 'None'}
+Minimum experience (years): ${job.minExperience ?? job.experience_years ?? 0}
 Required certifications: ${JSON.stringify(job.requiredCertifications || job.required_certifications || [])}
 
-Candidate: ${applicantName || 'Unknown'}
+FULL APPLICATION TEXT (resume, cover letter, transcript, certificates):
+${(profileText || '').slice(0, 16000) || '(No readable text extracted)'}
 
-Application text (cover letter + parsed documents — use ONLY facts from here):
-${(profileText || '').slice(0, 12000) || '(No text available)'}`;
+Review carefully. Only add skills to skill_adjustments if the required skill is clearly demonstrated in the text above.`;
 }
 
 function resolveProvider() {
@@ -67,12 +103,11 @@ function resolveProvider() {
 
   if (forced !== 'auto' && providers[forced]) {
     const p = providers[forced];
-    if (p.name === 'ollama' || (p.apiKey && !p.apiKey.startsWith('sk-your'))) return p;
+    if (p.name === 'ollama' || (p.apiKey && !String(p.apiKey).startsWith('sk-your'))) return p;
     return null;
   }
 
-  const order = ['groq', 'openai', 'gemini'];
-  for (const key of order) {
+  for (const key of ['groq', 'openai', 'gemini']) {
     const p = providers[key];
     if (p.apiKey && !String(p.apiKey).startsWith('sk-your') && p.apiKey !== 'paste') return p;
   }
@@ -95,27 +130,32 @@ function parseJsonContent(text) {
 }
 
 async function callOpenAiCompatible(provider, systemPrompt, userPrompt) {
+  const body = {
+    model: provider.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.1,
+  };
+
+  if (provider.name !== 'groq' || provider.model.includes('llama')) {
+    body.response_format = { type: 'json_object' };
+  }
+
   const res = await fetch(`${provider.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${provider.apiKey}`,
     },
-    body: JSON.stringify({
-      model: provider.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-    }),
-    signal: AbortSignal.timeout(45000),
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(60000),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`${provider.name} error (${res.status}): ${err.slice(0, 200)}`);
+    throw new Error(`${provider.name} error (${res.status}): ${err.slice(0, 300)}`);
   }
 
   const data = await res.json();
@@ -130,54 +170,64 @@ async function callGemini(provider, systemPrompt, userPrompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-      generationConfig: { temperature: 0.2, responseMimeType: 'application/json' },
+      generationConfig: { temperature: 0.1, responseMimeType: 'application/json' },
     }),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(60000),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Gemini error (${res.status}): ${err.slice(0, 200)}`);
+    throw new Error(`Gemini error (${res.status}): ${err.slice(0, 300)}`);
   }
 
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-function normalizeAnalysis(parsed, providerName, docMeta) {
-  const summary = parsed.summary || parsed.ai_summary || '';
+function normalizeLlmResult(parsed, provider) {
   return {
-    overall_score: Math.max(0, Math.min(100, Math.round(Number(parsed.overall_score) || 0))),
-    skills_match: parsed.skills_match || { score: 0, matched: [], missing: [], partial: [] },
-    education_match: parsed.education_match || { score: 0, meets_requirement: false, details: '' },
-    experience_match: parsed.experience_match || { score: 0, candidate_years: null, required_years: 0, details: '' },
-    strengths: parsed.strengths || [],
-    weaknesses: parsed.weaknesses || [],
+    skill_adjustments: parsed.skill_adjustments || { add_to_matched: [], add_to_partial: [] },
+    summary: parsed.summary || parsed.ai_summary || '',
+    ai_summary: parsed.summary || parsed.ai_summary || '',
+    strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+    weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],
     recommendation: parsed.recommendation || 'maybe',
-    ai_summary: summary,
-    summary,
-    model_version: `${providerName}:${resolveProvider()?.model || 'unknown'}`,
-    documents_reviewed: docMeta?.parsedLabels || [],
-    documents_failed: docMeta?.failedLabels || [],
+    model_version: `${provider.name}:${provider.model}`,
   };
 }
 
-async function analyzeWithLlm(job, application, profileText, docMeta) {
+async function analyzeWithLlm(job, application, profileText, docMeta, evidenceAnalysis) {
   const provider = resolveProvider();
   if (!provider) return null;
 
-  const userPrompt = buildUserPrompt(job, application.applicantName, profileText);
+  const userPrompt = buildUserPrompt(
+    job,
+    application.applicantName,
+    profileText,
+    evidenceAnalysis || { overall_score: 0, skills_match: {}, experience_match: {}, education_match: {} },
+  );
 
   try {
     let content;
     if (provider.name === 'gemini') {
-      content = await callGemini(provider, MATCHER_SYSTEM, userPrompt);
+      content = await callGemini(provider, HYBRID_SYSTEM, userPrompt);
     } else {
-      content = await callOpenAiCompatible(provider, MATCHER_SYSTEM, userPrompt);
+      content = await callOpenAiCompatible(provider, HYBRID_SYSTEM, userPrompt);
     }
 
     const parsed = parseJsonContent(content);
-    return normalizeAnalysis(parsed, provider.name, docMeta);
+    const result = normalizeLlmResult(parsed, provider);
+    result.documents_reviewed = docMeta?.parsedLabels || evidenceAnalysis?.documents_reviewed || [];
+    result.documents_failed = docMeta?.failedLabels || evidenceAnalysis?.documents_failed || [];
+
+    if (!result.summary && evidenceAnalysis?.ai_summary) {
+      result.summary = evidenceAnalysis.ai_summary;
+    }
+    if (!result.recommendation && evidenceAnalysis?.overall_score != null) {
+      result.recommendation = recommendationFromScore(evidenceAnalysis.overall_score);
+    }
+
+    return result;
   } catch (err) {
     console.error('LLM analysis failed:', err.message);
     return null;
@@ -187,7 +237,7 @@ async function analyzeWithLlm(job, application, profileText, docMeta) {
 function getActiveProviderInfo() {
   const p = resolveProvider();
   if (!p) return { available: false };
-  return { available: true, provider: p.name, model: p.model };
+  return { available: true, provider: p.name, model: p.model, mode: 'hybrid' };
 }
 
 module.exports = {

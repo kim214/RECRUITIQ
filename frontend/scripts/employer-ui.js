@@ -123,8 +123,8 @@ async function openCandidateModal(applicationId) {
         ${app.aiScore != null ? `
           <div class="ai-breakdown">
             <h4>AI Match Score: ${Math.round(app.aiScore)}%</h4>
-            ${analysis?.summary ? `<p>${analysis.summary}</p>` : (analysis?.aiSummary ? `<p>${analysis.aiSummary}</p>` : '')}
-            ${analysis?.skillsMatch ? `<p><strong>Skills (${Math.round(analysis.skillsMatch.score ?? analysis.skillsMatchScore ?? 0)}%):</strong>
+            ${analysis?.summary ? `<p>${analysis.summary}</p>` : ''}
+            ${analysis?.skillsMatch ? `<p><strong>Skills (${Math.round(analysis.skillsMatch.score ?? 0)}%):</strong>
               ${(analysis.skillsMatch.matched || []).map((s) => `<span class="ai-tag match">${s}</span>`).join('')}
               ${(analysis.skillsMatch.partial || []).map((s) => `<span class="ai-tag partial">${s} (partial)</span>`).join('')}
               ${(analysis.skillsMatch.missing || []).map((s) => `<span class="ai-tag miss">${s}</span>`).join('')}

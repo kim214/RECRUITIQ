@@ -69,9 +69,13 @@ const api = {
     const sep = q.includes('?') ? '&' : '?';
     return apiRequest(`/jobs${q}${sep}_t=${Date.now()}`);
   },
-  getMyJobs: () => apiRequest(`/jobs?mine=1&_t=${Date.now()}`),
+  getMyJobs: () => apiRequest(`/jobs/mine?_t=${Date.now()}`),
   getJob: (id) => apiRequest(`/jobs/${id}`),
-  createJob: (data) => apiRequest('/jobs', { method: 'POST', body: JSON.stringify(data) }),
+  createJob: async (data) => {
+    const job = await apiRequest('/jobs', { method: 'POST', body: JSON.stringify(data) });
+    if (typeof markJobsUpdated === 'function') markJobsUpdated(job.id);
+    return job;
+  },
   getApplications: () => apiRequest('/applications'),
   jobApplications: (jobId) => apiRequest(`/applications/job/${jobId}`),
   getApplication: (id) => apiRequest(`/applications/${id}`),
