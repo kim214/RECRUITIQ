@@ -58,7 +58,11 @@ In Vercel Dashboard → your project → **Settings** → **Environment Variable
 | `JWT_SECRET` | A long random secret string |
 | `SUPABASE_URL` | `https://xxxxx.supabase.co` |
 | `SUPABASE_SERVICE_KEY` | Your Supabase service_role key |
-| `AI_SERVICE_URL` | Leave empty (uses built-in AI scoring) |
+| `AI_SERVICE_URL` | Leave empty on Vercel unless Python AI is on Railway/Render |
+| `GROQ_API_KEY` | **Free AI** — get from https://console.groq.com |
+| `LLM_PROVIDER` | `groq` (free) or `openai` or `gemini` |
+| `OPENAI_API_KEY` | Optional — paid OpenAI analysis |
+| `GEMINI_API_KEY` | Optional — free tier Google Gemini |
 
 Apply to: **Production**, **Preview**, and **Development**
 

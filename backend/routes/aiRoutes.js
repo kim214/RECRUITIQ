@@ -2,6 +2,7 @@ const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
 const { analyzeApplication, prepareApplicationContext } = require('../lib/candidateAnalyzer');
+const { isLlmAvailable, analyzeWithLlm, getActiveProviderInfo } = require('../lib/llmAnalyzer');
 
 const router = express.Router();
 const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
@@ -18,6 +19,7 @@ function requestOrigin(req) {
 }
 
 async function callAiService(path, body) {
+  if (!process.env.AI_SERVICE_URL && process.env.VERCEL) return null;
   try {
     const res = await fetch(`${AI_URL}${path}`, {
       method: 'POST',
@@ -43,6 +45,34 @@ async function analyzeWithDocuments(job, app, req) {
   return { analysis, context };
 }
 
+async function runAnalysis(job, app, req) {
+  const { context, analysis: ruleAnalysis } = await analyzeWithDocuments(job, app, req);
+  const profileText = context.combinedText || app.coverLetter || app.cover_letter || '';
+
+  const serviceResult = await callAiService(`/analyze/${app.id}`, {
+    job,
+    application: app,
+    profile_text: profileText,
+  });
+  if (serviceResult?.analysis) {
+    return { analysis: serviceResult.analysis, context };
+  }
+
+  if (isLlmAvailable()) {
+    const llmAnalysis = await analyzeWithLlm(job, app, profileText, context.documentMeta);
+    if (llmAnalysis) return { analysis: llmAnalysis, context };
+  }
+
+  return { analysis: ruleAnalysis, context };
+}
+
+router.get('/status', requireRole('employer', 'admin'), (_req, res) => {
+  res.json({
+    llm: getActiveProviderInfo(),
+    pythonServiceUrl: process.env.AI_SERVICE_URL || null,
+  });
+});
+
 router.post('/analyze/:applicationId', requireRole('employer', 'admin'), async (req, res) => {
   try {
     const db = getDb();
@@ -50,20 +80,7 @@ router.post('/analyze/:applicationId', requireRole('employer', 'admin'), async (
     if (!app) return res.status(404).json({ message: 'Application not found' });
     const job = await db.getJob(app.jobId);
 
-    const { context, analysis: localAnalysis } = await analyzeWithDocuments(job, app, req);
-    const profileText = context.combinedText || app.coverLetter || app.cover_letter || '';
-
-    let result = await callAiService(`/analyze/${req.params.applicationId}`, {
-      job,
-      application: app,
-      profile_text: profileText,
-    });
-
-    if (!result) {
-      result = { analysis: localAnalysis };
-    }
-
-    const analysis = result.analysis || result;
+    const { analysis } = await runAnalysis(job, app, req);
     const saved = await db.saveAnalysis({
       application_id: app.id,
       job_id: app.jobId,
@@ -83,40 +100,15 @@ router.post('/rank/:jobId', requireRole('employer', 'admin'), async (req, res) =
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
     const apps = await db.listApplications({ jobId: req.params.jobId });
-    const enrichedApps = [];
+    const results = [];
 
     for (const app of apps) {
-      const { context, analysis } = await analyzeWithDocuments(job, app, req);
-      enrichedApps.push({
-        ...app,
-        profile_text: context.combinedText,
-        documents_reviewed: context.documentMeta?.parsedLabels || [],
-        _context: context,
-        _analysis: analysis,
-      });
+      const { analysis } = await runAnalysis(job, app, req);
+      await db.saveAnalysis({ application_id: app.id, job_id: job.id, ...analysis });
+      results.push({ ...app, aiScore: analysis.overall_score, analysis });
     }
 
-    let rankings = await callAiService(`/rank/${req.params.jobId}`, { job, applications: enrichedApps });
-
-    if (!rankings) {
-      const results = [];
-      for (const app of enrichedApps) {
-        await db.saveAnalysis({ application_id: app.id, job_id: job.id, ...app._analysis });
-        results.push({ ...app, aiScore: app._analysis.overall_score, analysis: app._analysis });
-      }
-      results.sort((a, b) => b.aiScore - a.aiScore);
-      rankings = { rankings: results };
-    } else {
-      for (const item of rankings.rankings || []) {
-        if (item.analysis) {
-          await db.saveAnalysis({
-            application_id: item.application_id || item.id,
-            job_id: req.params.jobId,
-            ...item.analysis,
-          });
-        }
-      }
-    }
+    results.sort((a, b) => b.aiScore - a.aiScore);
 
     const rankedApps = await db.listApplications({ jobId: req.params.jobId });
     const ranked = rankedApps
