@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "seed": "node scripts/seed.js",
     "seed:supabase": "node scripts/seed-supabase.js",
-    "assign:employer": "node scripts/assign-employer.js"
+    "assign:employer": "node scripts/assign-employer.js",
+    "setup:storage": "node scripts/setup-storage.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
