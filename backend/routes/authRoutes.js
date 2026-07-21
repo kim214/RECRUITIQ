@@ -53,17 +53,27 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const db = getDb();
-    const user = await db.findUserById(req.user.id);
+    let user = await db.findUserById(req.user.id);
+    if (!user && req.user.email) {
+      user = await db.findUserByEmail(req.user.email);
+    }
     if (!user) {
       return res.status(401).json({ message: 'Session expired — please log in again' });
     }
-    res.json({
+    const mapped = {
       id: user.id,
       email: user.email,
       fullName: user.full_name,
       role: user.role,
       company: user.company,
+    };
+    const token = signToken({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
     });
+    res.json({ ...mapped, token });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

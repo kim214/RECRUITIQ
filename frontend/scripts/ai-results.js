@@ -54,9 +54,11 @@ analyzeBtn.addEventListener('click', async () => {
 });
 
 (async () => {
-  const jobs = await api.getJobs('?mine=1');
-  jobSelect.innerHTML = jobs.map((j) => `<option value="${j.id}">${j.title}</option>`).join('');
-  if (jobParam) jobSelect.value = jobParam;
+  await populateJobSelect(jobSelect, { selectedId: jobParam });
   jobSelect.addEventListener('change', loadRankings);
+  window.reloadEmployerJobs = async () => {
+    await populateJobSelect(jobSelect, { selectedId: jobSelect.value });
+    await loadRankings();
+  };
   await loadRankings();
 })();

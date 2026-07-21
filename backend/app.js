@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { initDb, getDb } = require('./lib/db');
 const { authMiddleware } = require('./middleware/auth');
+const { resolveUserId } = require('./lib/resolveUser');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -63,7 +64,9 @@ app.get('/api/stats/employer', async (req, res) => {
   try {
     if (req.user.role !== 'employer') return res.status(403).json({ message: 'Access denied' });
     const db = getDb();
-    res.json(await db.employerStats(req.user.id));
+    const employerId = await resolveUserId(req);
+    res.set('Cache-Control', 'no-store');
+    res.json(await db.employerStats(employerId));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -73,7 +76,9 @@ app.get('/api/activity', async (req, res) => {
   try {
     if (req.user.role !== 'employer') return res.status(403).json({ message: 'Access denied' });
     const db = getDb();
-    res.json(await db.getActivity(req.user.id));
+    const employerId = await resolveUserId(req);
+    res.set('Cache-Control', 'no-store');
+    res.json(await db.getActivity(employerId));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
