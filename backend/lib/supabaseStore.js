@@ -188,6 +188,16 @@ const supabaseStore = {
     return mapJob(data, employer?.full_name, count || 0);
   },
 
+  async employerOwnsJob(employerId, jobId) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('id, employer_id')
+      .eq('id', jobId)
+      .maybeSingle();
+    if (error) throw error;
+    return !!data && data.employer_id === employerId;
+  },
+
   async createJob(employerId, data) {
     const { data: row, error } = await supabase.from('jobs').insert({
       employer_id: employerId,
@@ -350,7 +360,7 @@ const supabaseStore = {
     const byStage = {};
     apps.forEach((a) => { byStage[a.status] = (byStage[a.status] || 0) + 1; });
     const shortlisted = apps.filter((a) => a.status === 'shortlisted').length;
-    const pending = apps.filter((a) => ['submitted', 'ai_screening'].includes(a.status)).length;
+    const pending = apps.filter((a) => ['applied', 'submitted', 'ai_screening'].includes(a.status)).length;
     const analyses = await Promise.all(jobs.map((j) => this.getAnalysesForJob(j.id)));
     const analyzed = analyses.flat().length;
     return {

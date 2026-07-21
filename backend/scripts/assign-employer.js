@@ -1,11 +1,12 @@
 /**
  * Assign existing jobs to your employer account.
- * Run: npm run assign:employer
+ * Usage: npm run assign:employer
+ *        ASSIGN_EMPLOYER_EMAIL=you@email.com npm run assign:employer
  */
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-const EMPLOYER_EMAIL = 'nathankimutai59@gmail.com';
+const EMPLOYER_EMAIL = process.env.ASSIGN_EMPLOYER_EMAIL || process.argv[2] || 'nathankimutai59@gmail.com';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 

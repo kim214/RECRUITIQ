@@ -6,7 +6,7 @@ function initSidebar(activePage) {
     const role = document.getElementById('user-role');
     if (avatar) avatar.textContent = (user.fullName || user.email || '?')[0].toUpperCase();
     if (name) name.textContent = user.fullName || user.email;
-    if (role) role.textContent = user.role;
+    if (role) role.textContent = user.email ? `${user.role} · ${user.email}` : user.role;
     if (user.role) {
       document.body.classList.add(`portal-${user.role}`);
     }
@@ -32,5 +32,7 @@ function initSidebar(activePage) {
     const avatar = document.getElementById('user-avatar');
     if (name) name.textContent = fresh.fullName || fresh.email;
     if (avatar) avatar.textContent = (fresh.fullName || fresh.email || '?')[0].toUpperCase();
+    const role = document.getElementById('user-role');
+    if (role) role.textContent = fresh.email ? `${fresh.role} · ${fresh.email}` : fresh.role;
   }).catch(() => {});
 }
