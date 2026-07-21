@@ -1,7 +1,7 @@
 {
   "name": "reqruit-iq-backend",
   "version": "1.0.0",
-  "description": "Reqruit IQ API server",
+  "description": "RecruitIQ API server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
