@@ -47,11 +47,12 @@ async function apiRequest(path, options = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) {
+    const isLoginRequest = path.includes('/auth/login');
     clearAuth();
-    if (!window.location.pathname.includes('login.html')) {
+    if (!isLoginRequest && !window.location.pathname.includes('login.html')) {
       window.location.href = page('home/login.html?expired=1');
     }
-    throw new Error('Session expired — please log in again');
+    throw new Error(data.message || 'Session expired — please log in again');
   }
   if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
   return data;
