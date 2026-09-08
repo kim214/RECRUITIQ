@@ -1,12 +1,10 @@
 const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
-const { analyzeApplication, prepareApplicationContext } = require('../lib/candidateAnalyzer');
-const { isLlmAvailable, getActiveProviderInfo } = require('../lib/llmAnalyzer');
-const { runHybridAnalysis } = require('../lib/hybridAnalyzer');
+const { prepareApplicationContext } = require('../lib/candidateAnalyzer');
+const { analyzeWithOllama, checkOllamaHealth, isOllamaConfigured } = require('../lib/ollamaAnalyzer');
 
 const router = express.Router();
-const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 function requestOrigin(req) {
   if (req.headers.origin) return req.headers.origin;
@@ -19,59 +17,21 @@ function requestOrigin(req) {
   return process.env.PUBLIC_APP_URL || 'http://localhost:3001';
 }
 
-async function callAiService(path, body) {
-  if (!process.env.AI_SERVICE_URL && process.env.VERCEL) return null;
-  try {
-    const res = await fetch(`${AI_URL}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || err.message || `AI service error (${res.status})`);
-    }
-    return res.json();
-  } catch (err) {
-    if (err.cause?.code === 'ECONNREFUSED' || err.message.includes('fetch failed')) {
-      return null;
-    }
-    throw err;
-  }
-}
-
-async function analyzeWithDocuments(job, app, req) {
+async function runAnalysis(job, app, req) {
   const context = await prepareApplicationContext(app, { apiOrigin: requestOrigin(req) });
-  const analysis = analyzeApplication(job, app, { full_name: app.applicantName }, context);
+  const profileText = context.combinedText || app.coverLetter || app.cover_letter || '';
+
+  if (!isOllamaConfigured()) {
+    throw new Error('AI is configured for Ollama only. Set LLM_PROVIDER=ollama in backend/.env');
+  }
+
+  const analysis = await analyzeWithOllama(job, app, profileText, context.documentMeta);
   return { analysis, context };
 }
 
-async function runAnalysis(job, app, req) {
-  const { context, analysis: evidenceAnalysis } = await analyzeWithDocuments(job, app, req);
-  const profileText = context.combinedText || app.coverLetter || app.cover_letter || '';
-
-  if (isLlmAvailable()) {
-    const hybrid = await runHybridAnalysis(job, app, profileText, context.documentMeta, evidenceAnalysis);
-    return { analysis: hybrid, context };
-  }
-
-  const serviceResult = await callAiService(`/analyze/${app.id}`, {
-    job,
-    application: app,
-    profile_text: profileText,
-  });
-  if (serviceResult?.analysis) {
-    return { analysis: serviceResult.analysis, context };
-  }
-
-  return { analysis: evidenceAnalysis, context };
-}
-
-router.get('/status', requireRole('employer', 'admin'), (_req, res) => {
-  res.json({
-    llm: getActiveProviderInfo(),
-    pythonServiceUrl: process.env.AI_SERVICE_URL || null,
-  });
+router.get('/status', requireRole('employer', 'admin'), async (_req, res) => {
+  const ollama = await checkOllamaHealth();
+  res.json({ llm: ollama, mode: 'ollama-only' });
 });
 
 router.post('/analyze/:applicationId', requireRole('employer', 'admin'), async (req, res) => {
