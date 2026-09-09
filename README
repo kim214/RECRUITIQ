@@ -1,22 +1,6 @@
-<p align="center">
-  <img src="assets/readme-banner.svg" alt="RecruitIQ — Intelligent recruitment platform" width="100%" />
-</p>
+# RecruitIQ
 
-<p align="center">
-  <img src="https://img.shields.io/badge/RecruitIQ-Intelligent%20Hiring-4f46e5?style=for-the-badge&labelColor=4338ca" alt="RecruitIQ" />
-  <img src="https://img.shields.io/badge/AI-Ollama%20Powered-06b6d4?style=for-the-badge&labelColor=0891b2" alt="AI Powered" />
-  <img src="https://img.shields.io/badge/Stack-Node.js%20%C2%B7%20Supabase-6366f1?style=for-the-badge&labelColor=4f46e5" alt="Stack" />
-  <img src="https://img.shields.io/badge/Deploy-Vercel%20%C2%B7%20GCP-10b981?style=for-the-badge&labelColor=059669" alt="Deploy" />
-</p>
-
-<p align="center">
-  <strong>Intelligent recruitment, built for decisions that matter.</strong><br/>
-  Full-stack AI platform for employers, applicants, and administrators.
-</p>
-
----
-
-## Overview
+**Intelligent recruitment, built for decisions that matter.**
 
 RecruitIQ is a full-stack AI recruitment platform that helps organizations move from résumé overload to clear, evidence-based hiring. Employers post roles, review applicants, and receive ranked shortlists powered by real language-model analysis — while candidates apply through a dedicated portal with transparent progress at every stage.
 
@@ -32,77 +16,43 @@ The result is not a generic filter. Each candidate receives an individual assess
 
 ## Core Capabilities
 
-<table>
-<tr>
-<td width="33%" valign="top">
+**For employers**
+- Job creation and lifecycle management
+- Applicant pipeline with stage tracking
+- One-click AI ranking across all applications for a role
+- Per-candidate deep analysis with skills breakdown and written summary
+- Shortlist, reports, and activity views
 
-### Employers
-- Job creation & lifecycle
-- Applicant pipeline tracking
-- One-click AI ranking
-- Per-candidate deep analysis
-- Shortlist & reports
+**For applicants**
+- Browse and apply to open positions
+- Upload résumés, transcripts, and certificates
+- Track application status through the hiring pipeline
+- View AI screening outcomes where applicable
 
-</td>
-<td width="33%" valign="top">
-
-### Applicants
-- Browse & apply to roles
-- Upload résumés & documents
-- Track application status
-- Transparent hiring progress
-- AI screening visibility
-
-</td>
-<td width="33%" valign="top">
-
-### Administrators
-- Platform-wide analytics
-- User & job oversight
-- Recruitment activity views
-- System health monitoring
-
-</td>
-</tr>
-</table>
+**For administrators**
+- Platform-wide visibility into users, jobs, and analytics
+- Oversight of recruitment activity across the system
 
 ---
 
 ## AI Analysis
 
-RecruitIQ’s analysis layer is **Ollama-driven** and **document-aware**. Before any model runs, the platform parses applicant uploads and assembles a complete application context — cover letter plus extracted document text. The model then produces structured output:
+RecruitIQ’s analysis layer is Ollama-driven and document-aware. Before any model runs, the platform parses applicant uploads and assembles a complete application context — cover letter plus extracted document text. The model then produces structured output: scores, matched and missing skills, experience and education assessment, strengths, weaknesses, and a recommendation aligned to the evidence in the submission.
 
-| Output | Description |
-|--------|-------------|
-| **Match score** | Overall fit percentage for the role |
-| **Skills breakdown** | Matched, partial, and missing requirements |
-| **Experience & education** | Evidence-based assessment against job criteria |
-| **Summary** | Written narrative citing application content |
-| **Recommendation** | Hire / maybe / no-hire aligned to evidence |
-
-Analysis runs **per application**, not as a batch template. Rankings reflect genuine differentiation between candidates based on what they actually submitted.
+Analysis runs per application, not as a batch template. Rankings reflect genuine differentiation between candidates based on what they actually submitted.
 
 ---
 
 ## Architecture
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Frontend-HTML%20%C2%B7%20CSS%20%C2%B7%20JavaScript-f8fafc?style=flat-square&color=4f46e5" />
-  <img src="https://img.shields.io/badge/Backend-Node.js%20%C2%B7%20Express-f8fafc?style=flat-square&color=4338ca" />
-  <img src="https://img.shields.io/badge/Database-Supabase%20PostgreSQL-f8fafc?style=flat-square&color=06b6d4" />
-  <img src="https://img.shields.io/badge/Storage-Supabase%20Storage-f8fafc?style=flat-square&color=0891b2" />
-  <img src="https://img.shields.io/badge/AI-Ollama%20%28GCP%29-f8fafc?style=flat-square&color=10b981" />
-  <img src="https://img.shields.io/badge/Hosting-Vercel-f8fafc?style=flat-square&color=6366f1" />
-</p>
-
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | HTML, CSS, JavaScript — role-based portals with a shared design system |
-| **Backend** | Node.js, Express — REST API with JWT authentication |
-| **Database** | Supabase (PostgreSQL) — profiles, jobs, applications, AI analyses |
-| **Storage** | Supabase Storage — résumés and applicant documents |
-| **AI** | Ollama — cloud-hosted inference with configurable models |
-| **Deployment** | Vercel (application) · Google Cloud (AI inference) |
+| Frontend | HTML, CSS, JavaScript — role-based portals with a shared design system |
+| Backend | Node.js, Express — REST API with JWT authentication |
+| Database | Supabase (PostgreSQL) — profiles, jobs, applications, AI analyses |
+| Storage | Supabase Storage — résumés and applicant documents |
+| AI | Ollama — cloud-hosted inference with configurable models |
+| Deployment | Vercel (application) · Google Cloud (AI inference) |
 
 The API serves the frontend, orchestrates auth, persists hiring data, and coordinates document extraction and model inference. Employer-scoped queries ensure jobs and applicants remain tied to the account that owns them.
 
@@ -110,18 +60,10 @@ The API serves the frontend, orchestrates auth, persists hiring data, and coordi
 
 ## Design Philosophy
 
-> RecruitIQ is built around **clarity** and **accountability** in hiring.
-
-Requirements are explicit. Scores cite application content. The interface separates public marketing, authenticated portals, and employer tooling without conflating roles. The platform is intended to feel professional, fast, and trustworthy — the kind of system a hiring team can rely on daily.
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Brand-Indigo%20%234f46e5-4f46e5?style=flat-square" />
-  <img src="https://img.shields.io/badge/Accent-Cyan%20%2306b6d4-06b6d4?style=flat-square" />
-  <img src="https://img.shields.io/badge/Success-Emerald%20%2310b981-10b981?style=flat-square" />
-</p>
+RecruitIQ is built around clarity and accountability in hiring. Requirements are explicit. Scores cite application content. The interface separates public marketing, authenticated portals, and employer tooling without conflating roles. The platform is intended to feel professional, fast, and trustworthy — the kind of system a hiring team can rely on daily, not a demo that happens to run.
 
 ---
 
-<p align="center">
-  <sub>RecruitIQ · Proprietary · All rights reserved</sub>
-</p>
+## License
+
+Proprietary. All rights reserved.
