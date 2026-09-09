@@ -1,25 +1,127 @@
-# Reqruit IQ
+<p align="center">
+  <img src="assets/readme-banner.svg" alt="RecruitIQ — Intelligent recruitment platform" width="100%" />
+</p>
 
-AI-powered job recruitment platform — match candidates to jobs, rank with AI, and manage hiring pipelines.
+<p align="center">
+  <img src="https://img.shields.io/badge/RecruitIQ-Intelligent%20Hiring-4f46e5?style=for-the-badge&labelColor=4338ca" alt="RecruitIQ" />
+  <img src="https://img.shields.io/badge/AI-Ollama%20Powered-06b6d4?style=for-the-badge&labelColor=0891b2" alt="AI Powered" />
+  <img src="https://img.shields.io/badge/Stack-Node.js%20%C2%B7%20Supabase-6366f1?style=for-the-badge&labelColor=4f46e5" alt="Stack" />
+  <img src="https://img.shields.io/badge/Deploy-Vercel%20%C2%B7%20GCP-10b981?style=for-the-badge&labelColor=059669" alt="Deploy" />
+</p>
 
-## Quick Start
+<p align="center">
+  <strong>Intelligent recruitment, built for decisions that matter.</strong><br/>
+  Full-stack AI platform for employers, applicants, and administrators.
+</p>
 
-```bash
-# Terminal 1 — Backend API
-cd backend
-npm install
-npm start
+---
 
-# Terminal 2 — AI Service (optional)
-cd recruit-ai
-pip install -r requirements.txt
-uvicorn api:app --reload --port 8000
-```
+## Overview
 
-Open: **http://localhost:3001/frontend/home/index.html**
+RecruitIQ is a full-stack AI recruitment platform that helps organizations move from résumé overload to clear, evidence-based hiring. Employers post roles, review applicants, and receive ranked shortlists powered by real language-model analysis — while candidates apply through a dedicated portal with transparent progress at every stage.
 
-See [SETUP.md](SETUP.md) for full instructions, Supabase setup, and demo accounts.
+---
 
-See [VERCEL.md](VERCEL.md) for deploying to Vercel.
+## What RecruitIQ Does
 
-See [PUSH.md](PUSH.md) if you need help pushing to GitHub.
+RecruitIQ connects three audiences — **employers**, **applicants**, and **platform administrators** — in a single cohesive workflow. Jobs are defined with structured requirements: skills, experience, education, and certifications. Applicants submit cover letters and supporting documents; the system extracts readable content from PDFs and Word files, then evaluates each application against the role using Ollama-hosted models for scoring, narrative summaries, and hire/no-hire recommendations.
+
+The result is not a generic filter. Each candidate receives an individual assessment: overall match percentage, skill alignment, experience and education fit, documented strengths, identified gaps, and a ranked position relative to peers for the same opening.
+
+---
+
+## Core Capabilities
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### Employers
+- Job creation & lifecycle
+- Applicant pipeline tracking
+- One-click AI ranking
+- Per-candidate deep analysis
+- Shortlist & reports
+
+</td>
+<td width="33%" valign="top">
+
+### Applicants
+- Browse & apply to roles
+- Upload résumés & documents
+- Track application status
+- Transparent hiring progress
+- AI screening visibility
+
+</td>
+<td width="33%" valign="top">
+
+### Administrators
+- Platform-wide analytics
+- User & job oversight
+- Recruitment activity views
+- System health monitoring
+
+</td>
+</tr>
+</table>
+
+---
+
+## AI Analysis
+
+RecruitIQ’s analysis layer is **Ollama-driven** and **document-aware**. Before any model runs, the platform parses applicant uploads and assembles a complete application context — cover letter plus extracted document text. The model then produces structured output:
+
+| Output | Description |
+|--------|-------------|
+| **Match score** | Overall fit percentage for the role |
+| **Skills breakdown** | Matched, partial, and missing requirements |
+| **Experience & education** | Evidence-based assessment against job criteria |
+| **Summary** | Written narrative citing application content |
+| **Recommendation** | Hire / maybe / no-hire aligned to evidence |
+
+Analysis runs **per application**, not as a batch template. Rankings reflect genuine differentiation between candidates based on what they actually submitted.
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Frontend-HTML%20%C2%B7%20CSS%20%C2%B7%20JavaScript-f8fafc?style=flat-square&color=4f46e5" />
+  <img src="https://img.shields.io/badge/Backend-Node.js%20%C2%B7%20Express-f8fafc?style=flat-square&color=4338ca" />
+  <img src="https://img.shields.io/badge/Database-Supabase%20PostgreSQL-f8fafc?style=flat-square&color=06b6d4" />
+  <img src="https://img.shields.io/badge/Storage-Supabase%20Storage-f8fafc?style=flat-square&color=0891b2" />
+  <img src="https://img.shields.io/badge/AI-Ollama%20%28GCP%29-f8fafc?style=flat-square&color=10b981" />
+  <img src="https://img.shields.io/badge/Hosting-Vercel-f8fafc?style=flat-square&color=6366f1" />
+</p>
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | HTML, CSS, JavaScript — role-based portals with a shared design system |
+| **Backend** | Node.js, Express — REST API with JWT authentication |
+| **Database** | Supabase (PostgreSQL) — profiles, jobs, applications, AI analyses |
+| **Storage** | Supabase Storage — résumés and applicant documents |
+| **AI** | Ollama — cloud-hosted inference with configurable models |
+| **Deployment** | Vercel (application) · Google Cloud (AI inference) |
+
+The API serves the frontend, orchestrates auth, persists hiring data, and coordinates document extraction and model inference. Employer-scoped queries ensure jobs and applicants remain tied to the account that owns them.
+
+---
+
+## Design Philosophy
+
+> RecruitIQ is built around **clarity** and **accountability** in hiring.
+
+Requirements are explicit. Scores cite application content. The interface separates public marketing, authenticated portals, and employer tooling without conflating roles. The platform is intended to feel professional, fast, and trustworthy — the kind of system a hiring team can rely on daily.
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Brand-Indigo%20%234f46e5-4f46e5?style=flat-square" />
+  <img src="https://img.shields.io/badge/Accent-Cyan%20%2306b6d4-06b6d4?style=flat-square" />
+  <img src="https://img.shields.io/badge/Success-Emerald%20%2310b981-10b981?style=flat-square" />
+</p>
+
+---
+
+<p align="center">
+  <sub>RecruitIQ · Proprietary · All rights reserved</sub>
+</p>
