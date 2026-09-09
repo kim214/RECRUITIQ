@@ -1,0 +1,15 @@
+---
+description: Git commit rules — never add Cursor as co-author
+alwaysApply: true
+---
+
+# Git commits
+
+When creating git commits in this project:
+
+- NEVER add `Co-authored-by: Cursor` or any Cursor co-author trailer to commit messages.
+- NEVER add `Co-authored-by: cursoragent@cursor.com` or similar.
+- Commits must be authored only by the user — use a plain commit message with no co-author lines.
+- Only create commits when the user explicitly asks.
+
+This keeps Cursor off the GitHub contributors list.
