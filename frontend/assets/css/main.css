@@ -141,19 +141,9 @@ textarea.form-control {
   object-fit: contain;
 }
 
-/* Light surfaces — transparent logo, dark wordmark */
 .logo--nav img {
-  content: url('../images/recruitiq-logo-light.png');
   height: 44px;
   max-width: min(230px, 52vw);
-}
-
-/* Dark surfaces — transparent logo, light wordmark */
-.logo--sidebar img,
-.logo--footer img,
-.logo--auth img,
-.logo--auth-mobile img {
-  content: url('../images/recruitiq-logo-dark.png');
 }
 
 .logo-text { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; }
