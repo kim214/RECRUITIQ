@@ -38,6 +38,12 @@
   flex-shrink: 0;
 }
 
+.sidebar .logo.logo-brand img {
+  width: auto;
+  height: 40px;
+  max-width: 100%;
+}
+
 .sidebar .logo-text {
   color: #fff;
   font-size: 1.05rem;

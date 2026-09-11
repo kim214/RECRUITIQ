@@ -1,69 +1,46 @@
-# RecruitIQ
+<p align="center">
+  <img src="frontend/assets/images/recruitiq-logo-light.png" alt="RecruitIQ" width="480" />
+</p>
 
-**Intelligent recruitment, built for decisions that matter.**
+Intelligent recruitment, built for decisions that matter.
 
 RecruitIQ is a full-stack AI recruitment platform that helps organizations move from résumé overload to clear, evidence-based hiring. Employers post roles, review applicants, and receive ranked shortlists powered by real language-model analysis — while candidates apply through a dedicated portal with transparent progress at every stage.
 
----
+What RecruitIQ Does
 
-## What RecruitIQ Does
-
-RecruitIQ connects three audiences — **employers**, **applicants**, and **platform administrators** — in a single cohesive workflow. Jobs are defined with structured requirements: skills, experience, education, and certifications. Applicants submit cover letters and supporting documents; the system extracts readable content from PDFs and Word files, then evaluates each application against the role using Ollama-hosted models for scoring, narrative summaries, and hire/no-hire recommendations.
+RecruitIQ connects three audiences — employers, applicants, and platform administrators — in a single cohesive workflow. Jobs are defined with structured requirements: skills, experience, education, and certifications. Applicants submit cover letters and supporting documents; the system extracts readable content from PDFs and Word files, then evaluates each application against the role using Ollama-hosted models for scoring, narrative summaries, and hire/no-hire recommendations.
 
 The result is not a generic filter. Each candidate receives an individual assessment: overall match percentage, skill alignment, experience and education fit, documented strengths, identified gaps, and a ranked position relative to peers for the same opening.
 
----
+Core Capabilities
 
-## Core Capabilities
+For employers: job creation and lifecycle management, applicant pipeline with stage tracking, one-click AI ranking across all applications for a role, per-candidate deep analysis with skills breakdown and written summary, plus shortlist, reports, and activity views.
 
-**For employers**
-- Job creation and lifecycle management
-- Applicant pipeline with stage tracking
-- One-click AI ranking across all applications for a role
-- Per-candidate deep analysis with skills breakdown and written summary
-- Shortlist, reports, and activity views
+For applicants: browse and apply to open positions, upload résumés, transcripts, and certificates, track application status through the hiring pipeline, and view AI screening outcomes where applicable.
 
-**For applicants**
-- Browse and apply to open positions
-- Upload résumés, transcripts, and certificates
-- Track application status through the hiring pipeline
-- View AI screening outcomes where applicable
+For administrators: platform-wide visibility into users, jobs, and analytics, with oversight of recruitment activity across the system.
 
-**For administrators**
-- Platform-wide visibility into users, jobs, and analytics
-- Oversight of recruitment activity across the system
-
----
-
-## AI Analysis
+AI Analysis
 
 RecruitIQ’s analysis layer is Ollama-driven and document-aware. Before any model runs, the platform parses applicant uploads and assembles a complete application context — cover letter plus extracted document text. The model then produces structured output: scores, matched and missing skills, experience and education assessment, strengths, weaknesses, and a recommendation aligned to the evidence in the submission.
 
 Analysis runs per application, not as a batch template. Rankings reflect genuine differentiation between candidates based on what they actually submitted.
 
----
+Architecture
 
-## Architecture
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | HTML, CSS, JavaScript — role-based portals with a shared design system |
-| Backend | Node.js, Express — REST API with JWT authentication |
-| Database | Supabase (PostgreSQL) — profiles, jobs, applications, AI analyses |
-| Storage | Supabase Storage — résumés and applicant documents |
-| AI | Ollama — cloud-hosted inference with configurable models |
-| Deployment | Vercel (application) · Google Cloud (AI inference) |
+Frontend — HTML, CSS, JavaScript: role-based portals with a shared design system.
+Backend — Node.js, Express: REST API with JWT authentication.
+Database — Supabase (PostgreSQL): profiles, jobs, applications, AI analyses.
+Storage — Supabase Storage: résumés and applicant documents.
+AI — Ollama: cloud-hosted inference with configurable models.
+Deployment — Vercel for the application, Google Cloud for AI inference.
 
 The API serves the frontend, orchestrates auth, persists hiring data, and coordinates document extraction and model inference. Employer-scoped queries ensure jobs and applicants remain tied to the account that owns them.
 
----
+Design Philosophy
 
-## Design Philosophy
+RecruitIQ is built around clarity and accountability in hiring. Requirements are explicit. Scores cite application content. The interface separates public marketing, authenticated portals, and employer tooling without conflating roles. The platform is intended to feel professional, fast, and trustworthy — the kind of system a hiring team can rely on daily.
 
-RecruitIQ is built around clarity and accountability in hiring. Requirements are explicit. Scores cite application content. The interface separates public marketing, authenticated portals, and employer tooling without conflating roles. The platform is intended to feel professional, fast, and trustworthy — the kind of system a hiring team can rely on daily, not a demo that happens to run.
-
----
-
-## License
+License
 
 Proprietary. All rights reserved.

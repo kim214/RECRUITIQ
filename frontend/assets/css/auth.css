@@ -47,6 +47,16 @@
   margin-bottom: 2.5rem;
 }
 
+.auth-brand .logo.logo-brand img {
+  height: 52px;
+  max-width: min(280px, 85vw);
+}
+
+.auth-mobile-logo .logo.logo-brand img {
+  height: 40px;
+  max-width: min(220px, 80vw);
+}
+
 .auth-brand .logo-text {
   color: #fff;
   font-size: 1.35rem;

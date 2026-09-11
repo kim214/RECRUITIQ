@@ -126,6 +126,36 @@ textarea.form-control {
 }
 .public-nav .logo { font-weight: 800; font-size: 1.25rem; color: var(--text); display: flex; align-items: center; gap: 0.6rem; }
 .public-nav .logo img { height: 40px; width: 40px; display: block; flex-shrink: 0; }
+
+/* Full horizontal brand logo */
+.logo.logo-brand {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  text-decoration: none;
+}
+.logo.logo-brand img {
+  display: block;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Light surfaces — transparent logo, dark wordmark */
+.logo--nav img {
+  content: url('../images/recruitiq-logo-light.png');
+  height: 44px;
+  max-width: min(230px, 52vw);
+}
+
+/* Dark surfaces — transparent logo, light wordmark */
+.logo--sidebar img,
+.logo--footer img,
+.logo--auth img,
+.logo--auth-mobile img {
+  content: url('../images/recruitiq-logo-dark.png');
+}
+
 .logo-text { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; }
 .logo-text strong {
   background: linear-gradient(135deg, var(--primary), var(--accent));

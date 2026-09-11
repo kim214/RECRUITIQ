@@ -17,6 +17,21 @@
   width: 40px;
 }
 
+.home-nav .logo.logo-brand {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.home-nav .logo.logo-brand:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.home-nav .logo.logo-brand img {
+  height: 44px;
+  width: auto;
+  max-width: min(230px, 52vw);
+}
+
 .nav-toggle {
   display: none;
   background: none;
@@ -599,6 +614,13 @@
   height: 40px;
   width: 40px;
   margin-bottom: 0.75rem;
+}
+
+.home-footer .logo.logo-brand img {
+  height: 46px;
+  width: auto;
+  max-width: 250px;
+  margin-bottom: 1rem;
 }
 
 .footer-brand .logo-text { color: #fff; }
