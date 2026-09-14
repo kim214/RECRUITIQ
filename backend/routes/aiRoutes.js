@@ -1,6 +1,7 @@
 const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
+const { resolveUserId } = require('../lib/resolveUser');
 const { prepareApplicationContext } = require('../lib/candidateAnalyzer');
 const { analyzeWithOllama, checkOllamaHealth, isOllamaConfigured } = require('../lib/ollamaAnalyzer');
 
@@ -40,6 +41,13 @@ router.post('/analyze/:applicationId', requireRole('employer', 'admin'), async (
     const app = await db.getApplication(req.params.applicationId);
     if (!app) return res.status(404).json({ message: 'Application not found' });
     const job = await db.getJob(app.jobId);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    if (req.user.role === 'employer') {
+      const employerId = await resolveUserId(req);
+      const owns = await db.employerOwnsJob(employerId, job.id);
+      if (!owns) return res.status(403).json({ message: 'You can only analyze applicants for jobs you created.' });
+    }
 
     const { analysis } = await runAnalysis(job, app, req);
     const saved = await db.saveAnalysis({
@@ -59,6 +67,12 @@ router.post('/rank/:jobId', requireRole('employer', 'admin'), async (req, res) =
     const db = getDb();
     const job = await db.getJob(req.params.jobId);
     if (!job) return res.status(404).json({ message: 'Job not found' });
+
+    if (req.user.role === 'employer') {
+      const employerId = await resolveUserId(req);
+      const owns = await db.employerOwnsJob(employerId, job.id);
+      if (!owns) return res.status(403).json({ message: 'You can only rank candidates for jobs you created.' });
+    }
 
     const apps = await db.listApplications({ jobId: req.params.jobId });
     const results = [];
@@ -85,6 +99,11 @@ router.post('/rank/:jobId', requireRole('employer', 'admin'), async (req, res) =
 router.get('/rankings/:jobId', requireRole('employer', 'admin'), async (req, res) => {
   try {
     const db = getDb();
+    if (req.user.role === 'employer') {
+      const employerId = await resolveUserId(req);
+      const owns = await db.employerOwnsJob(employerId, req.params.jobId);
+      if (!owns) return res.status(403).json({ message: 'You can only view rankings for jobs you created.' });
+    }
     const apps = await db.listApplications({ jobId: req.params.jobId });
     const ranked = apps
       .filter((a) => a.aiScore != null)
