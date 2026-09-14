@@ -4,8 +4,14 @@
   "private": true,
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "cd backend && npm run dev",
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev --prefix backend\" \"npm run dev --prefix client\"",
+    "dev:api": "npm run dev --prefix backend",
+    "dev:web": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
     "seed:supabase": "cd backend && npm run seed:supabase"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

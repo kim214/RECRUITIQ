@@ -18,13 +18,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize database once (works for local server + Vercel serverless)
 let dbReady = null;
 function ensureDb() {
   if (!dbReady) dbReady = initDb();
   return dbReady;
 }
-app.use(async (_req, _res, next) => {
+app.use(async (_req, res, next) => {
   try {
     await ensureDb();
     next();
@@ -32,15 +31,6 @@ app.use(async (_req, _res, next) => {
     next(err);
   }
 });
-
-// Static files (local dev only — Vercel serves frontend via vercel.json)
-if (!process.env.VERCEL) {
-  app.use('/frontend', express.static(path.join(__dirname, '..', 'frontend')));
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  app.get('/', (_req, res) => {
-    res.redirect('/frontend/home/index.html');
-  });
-}
 
 app.use('/api/auth', authRoutes);
 
@@ -89,6 +79,18 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/ai', aiRoutes);
+
+if (!process.env.VERCEL) {
+  const dist = path.join(__dirname, '..', 'client', 'dist');
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  app.use(express.static(dist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(dist, 'index.html'), (err) => {
+      if (err) next();
+    });
+  });
+}
 
 app.use((err, _req, res, _next) => {
   console.error(err);
