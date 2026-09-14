@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   password_hash TEXT NOT NULL,
   full_name     TEXT NOT NULL,
   role          TEXT NOT NULL CHECK (role IN ('admin', 'employer', 'applicant')),
+  status        TEXT DEFAULT 'active' CHECK (status IN ('active', 'banned')),
   company       TEXT,
   phone         TEXT,
   avatar_url    TEXT,
@@ -87,3 +88,4 @@ ALTER TABLE ai_analyses DISABLE ROW LEVEL SECURITY;
 
 -- After running this, seed demo data from your terminal:
 --   cd backend && npm run seed:supabase
+-- Existing projects: also run supabase/add-user-status.sql so admins can suspend accounts.

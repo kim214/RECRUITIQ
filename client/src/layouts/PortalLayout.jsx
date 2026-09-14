@@ -30,6 +30,7 @@ const NAV = {
       { to: '/admin', label: 'Dashboard', end: true },
       { to: '/admin/users', label: 'Users' },
       { to: '/admin/jobs', label: 'Jobs' },
+      { to: '/admin/applications', label: 'Applications' },
       { to: '/admin/analytics', label: 'Analytics' },
     ],
   },

@@ -20,6 +20,7 @@ import Profile from './pages/applicant/Profile.jsx';
 import AdminDashboard from './pages/admin/Dashboard.jsx';
 import AdminUsers from './pages/admin/Users.jsx';
 import AdminJobs from './pages/admin/Jobs.jsx';
+import AdminApplications from './pages/admin/Applications.jsx';
 import AdminAnalytics from './pages/admin/Analytics.jsx';
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
           <Route path="/admin/jobs" element={<ProtectedRoute roles={['admin']}><AdminJobs /></ProtectedRoute>} />
+          <Route path="/admin/applications" element={<ProtectedRoute roles={['admin']}><AdminApplications /></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute roles={['admin']}><AdminAnalytics /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
