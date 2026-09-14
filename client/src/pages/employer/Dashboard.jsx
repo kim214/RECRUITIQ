@@ -38,7 +38,7 @@ export default function EmployerDashboard() {
       {!data ? <Loader /> : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Active Jobs" value={data.stats.activeJobs ?? data.stats.totalJobs} href="/employer/jobs/new" accent="teal" />
+            <StatCard label="Active Jobs" value={data.stats.activeJobs ?? data.stats.totalJobs} href="/employer/jobs" accent="teal" />
             <StatCard label="Applications" value={data.stats.totalApplications} href="/employer/candidates" />
             <StatCard label="Pending Review" value={data.stats.pendingReview} href="/employer/rankings" accent="amber" />
             <StatCard label="Shortlisted" value={data.stats.shortlisted} href="/employer/shortlist" accent="rose" />
@@ -57,15 +57,22 @@ export default function EmployerDashboard() {
               </div>
             </section>
             <section className="rounded-2xl bg-white p-5 shadow-card">
-              <h3 className="mb-4 font-bold">Your Jobs</h3>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-bold">Your Jobs</h3>
+                <Link to="/employer/jobs" className="text-sm font-semibold text-brand-600">View all</Link>
+              </div>
               <div className="space-y-2">
                 {data.jobs.map((j) => (
-                  <div key={j.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-3">
+                  <div key={j.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-3">
                     <div>
                       <div className="font-semibold">{j.title}</div>
-                      <div className="text-xs text-ink-500">{j.location || 'Remote'}</div>
+                      <div className="text-xs text-ink-500">
+                        {j.location || 'Remote'}
+                        {j.applicationDeadline ? ` · Apply by ${formatDate(j.applicationDeadline)}` : ''}
+                        {j.acceptingApplications === false ? ' · Closed' : ''}
+                      </div>
                     </div>
-                    <Link to={`/employer/rankings?job=${j.id}`} className="text-sm font-semibold text-brand-600">Rankings</Link>
+                    <Link to={`/employer/jobs`} className="text-sm font-semibold text-brand-600">Manage</Link>
                   </div>
                 ))}
                 {!data.jobs.length && <p className="text-sm text-ink-500">No jobs yet. Post your first role.</p>}

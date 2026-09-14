@@ -86,6 +86,7 @@ export default function AdminJobs() {
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Employer</th>
                 <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Deadline</th>
                 <th className="px-4 py-3">Apps</th>
                 <th className="px-4 py-3">Posted</th>
                 <th className="px-4 py-3">Status</th>
@@ -98,10 +99,13 @@ export default function AdminJobs() {
                   <td className="px-4 py-3 font-semibold">{j.title}</td>
                   <td className="px-4 py-3">{j.employerName || '—'}</td>
                   <td className="px-4 py-3">{j.location || 'Remote'}</td>
+                  <td className="px-4 py-3 text-ink-500">{formatDate(j.applicationDeadline)}</td>
                   <td className="px-4 py-3">{j.applicationCount ?? 0}</td>
                   <td className="px-4 py-3 text-ink-500">{formatDate(j.createdAt)}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={j.status === 'open' ? 'success' : j.status === 'closed' ? 'danger' : 'warning'}>{j.status || 'open'}</Badge>
+                    <Badge tone={j.acceptingApplications ? 'success' : j.closedReason === 'deadline' ? 'warning' : 'danger'}>
+                      {j.acceptingApplications ? 'open' : j.closedReason === 'deadline' ? 'deadline passed' : (j.status || 'closed')}
+                    </Badge>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">

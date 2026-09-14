@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const { enrichJob, requireFutureDeadline, closedMessage, deadlineHasPassed } = require('./jobAvailability');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -41,6 +42,7 @@ function ensureDb() {
       required_education: "Bachelor's in Computer Science",
       required_certifications: [],
       experience_years: 2,
+      application_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'open',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -105,6 +107,8 @@ function mapJob(j, users, appCounts) {
     required_certifications: j.required_certifications,
     minExperience: j.experience_years,
     experience_years: j.experience_years,
+    applicationDeadline: j.application_deadline || null,
+    application_deadline: j.application_deadline || null,
     status: j.status,
     employerId: j.employer_id,
     employer_id: j.employer_id,
@@ -261,6 +265,7 @@ const localStore = {
     if (!job) throw new Error('Job not found');
     if (patch.status) job.status = patch.status;
     if (patch.title) job.title = patch.title;
+    if (patch.applicationDeadline !== undefined) job.application_deadline = patch.applicationDeadline || null;
     job.updated_at = new Date().toISOString();
     write(db);
     return this.getJob(id);
@@ -276,7 +281,21 @@ const localStore = {
     return { ok: true };
   },
 
-  async listJobs({ employerId, status, openOnly } = {}) {
+  async closeExpiredJobs() {
+    const db = read();
+    let changed = false;
+    db.jobs.forEach((j) => {
+      if (j.status === 'open' && deadlineHasPassed(j.application_deadline)) {
+        j.status = 'closed';
+        j.updated_at = new Date().toISOString();
+        changed = true;
+      }
+    });
+    if (changed) write(db);
+  },
+
+  async listJobs({ employerId, status, openOnly, excludeDraft } = {}) {
+    await this.closeExpiredJobs();
     const db = read();
     const counts = {};
     db.applications.forEach((a) => { counts[a.job_id] = (counts[a.job_id] || 0) + 1; });
@@ -284,15 +303,17 @@ const localStore = {
     if (employerId) jobs = jobs.filter((j) => j.employer_id === employerId);
     if (status) jobs = jobs.filter((j) => j.status === status);
     if (openOnly) jobs = jobs.filter((j) => j.status === 'open');
-    return jobs.map((j) => mapJob(j, db.users, counts));
+    if (excludeDraft) jobs = jobs.filter((j) => j.status !== 'draft');
+    return jobs.map((j) => enrichJob(mapJob(j, db.users, counts)));
   },
 
   async getJob(id) {
+    await this.closeExpiredJobs();
     const db = read();
     const counts = {};
     db.applications.forEach((a) => { counts[a.job_id] = (counts[a.job_id] || 0) + 1; });
     const job = db.jobs.find((j) => j.id === id);
-    return job ? mapJob(job, db.users, counts) : null;
+    return job ? enrichJob(mapJob(job, db.users, counts)) : null;
   },
 
   async employerOwnsJob(employerId, jobId) {
@@ -302,6 +323,7 @@ const localStore = {
   },
 
   async createJob(employerId, data) {
+    const deadline = requireFutureDeadline(data.applicationDeadline || data.application_deadline);
     const db = read();
     const job = {
       id: uuidv4(),
@@ -316,6 +338,7 @@ const localStore = {
       required_education: data.requiredEducation || null,
       required_certifications: data.requiredCertifications || [],
       experience_years: data.minExperience || 0,
+      application_deadline: deadline,
       status: 'open',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -332,7 +355,7 @@ const localStore = {
     });
     write(db);
     const counts = {};
-    return mapJob(job, db.users, counts);
+    return enrichJob(mapJob(job, db.users, counts));
   },
 
   async listApplications({ jobId, applicantId, employerId } = {}) {
@@ -354,6 +377,11 @@ const localStore = {
   },
 
   async createApplication(applicantId, data) {
+    await this.closeExpiredJobs();
+    const listed = await this.getJob(data.jobId);
+    if (!listed) throw new Error('Job not found');
+    const blocked = closedMessage(listed);
+    if (blocked) throw new Error(blocked);
     const db = read();
     if (db.applications.some((a) => a.job_id === data.jobId && a.applicant_id === applicantId)) {
       throw new Error('You have already applied to this job');
@@ -507,6 +535,7 @@ const localStore = {
   },
 
   async employerStats(employerId) {
+    await this.closeExpiredJobs();
     const db = read();
     const jobs = db.jobs.filter((j) => j.employer_id === employerId);
     const jobIds = new Set(jobs.map((j) => j.id));
@@ -521,7 +550,7 @@ const localStore = {
     const analyzed = db.ai_analyses.filter((a) => jobIds.has(a.job_id)).length;
     const shortlistRate = apps.length ? Math.round((shortlisted / apps.length) * 100) : 0;
     return {
-      activeJobs: jobs.filter((j) => j.status === 'open').length,
+      activeJobs: jobs.filter((j) => j.status === 'open' && !deadlineHasPassed(j.application_deadline)).length,
       totalApplications: apps.length,
       pendingReview: pending,
       shortlisted,

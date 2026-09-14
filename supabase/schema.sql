@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   required_education      TEXT,
   required_certifications TEXT[] DEFAULT '{}',
   experience_years        INTEGER DEFAULT 0,
+  application_deadline    TIMESTAMPTZ,
   status                  TEXT DEFAULT 'open' CHECK (status IN ('open','closed','draft')),
   created_at              TIMESTAMPTZ DEFAULT NOW(),
   updated_at              TIMESTAMPTZ DEFAULT NOW()
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS ai_analyses (
 -- ─── INDEXES ───
 CREATE INDEX IF NOT EXISTS idx_jobs_employer ON jobs(employer_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+CREATE INDEX IF NOT EXISTS idx_jobs_deadline ON jobs(application_deadline);
 CREATE INDEX IF NOT EXISTS idx_applications_job ON applications(job_id);
 CREATE INDEX IF NOT EXISTS idx_applications_applicant ON applications(applicant_id);
 CREATE INDEX IF NOT EXISTS idx_ai_analyses_job ON ai_analyses(job_id);
@@ -89,3 +91,4 @@ ALTER TABLE ai_analyses DISABLE ROW LEVEL SECURITY;
 -- After running this, seed demo data from your terminal:
 --   cd backend && npm run seed:supabase
 -- Existing projects: also run supabase/add-user-status.sql so admins can suspend accounts.
+-- Existing projects: also run supabase/add-job-deadline.sql so postings store application deadlines.

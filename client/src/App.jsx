@@ -8,6 +8,7 @@ import Contact from './pages/public/Contact.jsx';
 import Login from './pages/auth/Login.jsx';
 import Register from './pages/auth/Register.jsx';
 import EmployerDashboard from './pages/employer/Dashboard.jsx';
+import EmployerJobs from './pages/employer/Jobs.jsx';
 import CreateJob from './pages/employer/CreateJob.jsx';
 import Candidates from './pages/employer/Candidates.jsx';
 import Shortlist from './pages/employer/Shortlist.jsx';
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
 
           <Route path="/employer" element={<ProtectedRoute roles={['employer']}><EmployerDashboard /></ProtectedRoute>} />
+          <Route path="/employer/jobs" element={<ProtectedRoute roles={['employer']}><EmployerJobs /></ProtectedRoute>} />
           <Route path="/employer/jobs/new" element={<ProtectedRoute roles={['employer']}><CreateJob /></ProtectedRoute>} />
           <Route path="/employer/candidates" element={<ProtectedRoute roles={['employer']}><Candidates /></ProtectedRoute>} />
           <Route path="/employer/shortlist" element={<ProtectedRoute roles={['employer']}><Shortlist /></ProtectedRoute>} />

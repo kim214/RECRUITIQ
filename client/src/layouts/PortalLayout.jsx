@@ -8,6 +8,7 @@ const NAV = {
     badge: 'Employer Portal',
     items: [
       { to: '/employer', label: 'Dashboard', end: true },
+      { to: '/employer/jobs', label: 'My Jobs', end: true },
       { to: '/employer/jobs/new', label: 'Post Job' },
       { to: '/employer/candidates', label: 'Candidates' },
       { to: '/employer/shortlist', label: 'Shortlisting' },

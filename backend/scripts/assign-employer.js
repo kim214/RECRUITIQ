@@ -36,6 +36,7 @@ async function run() {
       required_skills: ['JavaScript', 'React', 'Node.js', 'SQL'],
       required_education: "Bachelor's in Computer Science",
       experience_years: 2,
+      application_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'open',
     });
     if (error) throw error;

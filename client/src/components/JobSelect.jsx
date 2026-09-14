@@ -17,7 +17,7 @@ export default function JobSelect({ value, onChange }) {
       <option value="">Select a job</option>
       {jobs.map((j) => (
         <option key={j.id} value={j.id}>
-          {j.title}
+          {j.title}{j.acceptingApplications === false ? ' (closed)' : ''}
         </option>
       ))}
     </select>

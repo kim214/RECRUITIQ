@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import PortalLayout from '../../layouts/PortalLayout.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import Loader from '../../components/Loader.jsx';
+import Badge from '../../components/Badge.jsx';
 import { api } from '../../api/client.js';
+import { formatDateTime } from '../../utils/format.js';
 
 export default function ApplicantJobs() {
   const [jobs, setJobs] = useState(null);
@@ -21,6 +23,12 @@ export default function ApplicantJobs() {
   async function submit(e) {
     e.preventDefault();
     const form = e.target;
+    if (!applyJob?.acceptingApplications) {
+      setError(applyJob?.closedReason === 'deadline'
+        ? 'This job no longer accepts applications — the deadline has passed.'
+        : 'This job is closed and no longer accepts applications.');
+      return;
+    }
     if (!form.resume.files[0]) {
       setError('Please upload your resume.');
       return;
@@ -54,26 +62,41 @@ export default function ApplicantJobs() {
 
   return (
     <PortalLayout role="applicant" title="Browse Open Jobs" subtitle="AI-matched roles from verified employers">
+      {error && !applyJob && <p className="mb-4 rounded-lg bg-rose-50 p-3 text-rose-700">{error}</p>}
       {!jobs ? <Loader /> : !jobs.length ? (
-        <EmptyState icon="📋" title="No open jobs" message="Check back soon — employers are posting new roles regularly." />
+        <EmptyState icon="📋" title="No jobs" message="Check back soon — employers are posting new roles regularly." />
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
-          {jobs.map((j) => (
-            <article key={j.id} className="rounded-2xl bg-white p-5 shadow-card">
-              <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700">{j.employmentType || 'Full-time'}</span>
-              <h3 className="mt-3 text-lg font-bold">{j.title}</h3>
-              <p className="text-sm text-ink-500">📍 {j.location || 'Remote'} · {j.employerName || 'Company'}</p>
-              <p className="mt-2 text-sm text-ink-600">{j.description?.slice(0, 180)}{j.description?.length > 180 ? '...' : ''}</p>
-              <div className="mt-3 flex flex-wrap gap-1">
-                {(j.requiredSkills || []).map((s) => (
-                  <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{s}</span>
-                ))}
-              </div>
-              <button onClick={() => { setApplyJob(j); setError(''); setOk(''); }} className="mt-4 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white">
-                Apply Now
-              </button>
-            </article>
-          ))}
+          {jobs.map((j) => {
+            const closed = j.acceptingApplications === false;
+            const deadlineNote = j.closedReason === 'deadline'
+              ? 'This job no longer accepts applications — the deadline has passed.'
+              : 'This job is closed and no longer accepts applications.';
+            return (
+              <article key={j.id} className="rounded-2xl bg-white p-5 shadow-card">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-semibold text-brand-700">{j.employmentType || 'Full-time'}</span>
+                  {closed && <Badge tone={j.closedReason === 'deadline' ? 'warning' : 'danger'}>{j.closedReason === 'deadline' ? 'Deadline passed' : 'Closed'}</Badge>}
+                </div>
+                <h3 className="mt-3 text-lg font-bold">{j.title}</h3>
+                <p className="text-sm text-ink-500">📍 {j.location || 'Remote'} · {j.employerName || 'Company'}</p>
+                <p className="mt-1 text-xs text-ink-500">Apply by {formatDateTime(j.applicationDeadline)}</p>
+                <p className="mt-2 text-sm text-ink-600">{j.description?.slice(0, 180)}{j.description?.length > 180 ? '...' : ''}</p>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {(j.requiredSkills || []).map((s) => (
+                    <span key={s} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{s}</span>
+                  ))}
+                </div>
+                {closed ? (
+                  <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">{deadlineNote}</p>
+                ) : (
+                  <button onClick={() => { setApplyJob(j); setError(''); setOk(''); }} className="mt-4 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white">
+                    Apply Now
+                  </button>
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
 

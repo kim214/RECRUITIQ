@@ -74,7 +74,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', requireRole('applicant'), async (req, res) => {
   try {
     const db = getDb();
-    const app = await db.createApplication(req.user.id, req.body);
+    const applicantId = await resolveUserId(req);
+    if (!applicantId) return res.status(401).json({ message: 'Applicant account not found — log in again' });
+    const app = await db.createApplication(applicantId, req.body);
     res.status(201).json(app);
   } catch (err) {
     res.status(400).json({ message: err.message });

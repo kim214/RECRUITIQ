@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const { enrichJob, requireFutureDeadline, closedMessage } = require('./jobAvailability');
 
 let supabase;
 
@@ -59,6 +60,8 @@ function mapJob(row, employerName, appCount) {
     required_certifications: row.required_certifications,
     minExperience: row.experience_years,
     experience_years: row.experience_years,
+    applicationDeadline: row.application_deadline || null,
+    application_deadline: row.application_deadline || null,
     status: row.status,
     employerId: row.employer_id,
     employer_id: row.employer_id,
@@ -193,6 +196,7 @@ const supabaseStore = {
     const updates = { updated_at: new Date().toISOString() };
     if (patch.status) updates.status = patch.status;
     if (patch.title) updates.title = patch.title;
+    if (patch.applicationDeadline !== undefined) updates.application_deadline = patch.applicationDeadline || null;
     const { error } = await supabase.from('jobs').update(updates).eq('id', id);
     if (error) throw error;
     return this.getJob(id);
@@ -204,7 +208,20 @@ const supabaseStore = {
     return { ok: true };
   },
 
-  async listJobs({ employerId, status, openOnly } = {}) {
+  async closeExpiredJobs() {
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('jobs')
+      .update({ status: 'closed', updated_at: now })
+      .eq('status', 'open')
+      .not('application_deadline', 'is', null)
+      .lt('application_deadline', now);
+    if (error && /application_deadline/i.test(String(error.message || ''))) return;
+    if (error) console.warn('closeExpiredJobs:', error.message);
+  },
+
+  async listJobs({ employerId, status, openOnly, excludeDraft } = {}) {
+    await this.closeExpiredJobs();
     let query = supabase.from('jobs').select('*');
     if (employerId) query = query.eq('employer_id', employerId);
     if (status) query = query.eq('status', status);
@@ -223,16 +240,19 @@ const supabaseStore = {
       .in('id', employerIds.length ? employerIds : ['00000000-0000-0000-0000-000000000000']);
     const employerMap = Object.fromEntries((employers || []).map((e) => [e.id, e.full_name]));
 
-    return (data || []).map((j) => mapJob(j, employerMap[j.employer_id], counts[j.id]));
+    let jobs = (data || []).map((j) => enrichJob(mapJob(j, employerMap[j.employer_id], counts[j.id])));
+    if (excludeDraft) jobs = jobs.filter((j) => j.status !== 'draft');
+    return jobs;
   },
 
   async getJob(id) {
+    await this.closeExpiredJobs();
     const { data, error } = await supabase.from('jobs').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
     const { count } = await supabase.from('applications').select('*', { count: 'exact', head: true }).eq('job_id', id);
     const employer = await this.findUserById(data.employer_id);
-    return mapJob(data, employer?.full_name, count || 0);
+    return enrichJob(mapJob(data, employer?.full_name, count || 0));
   },
 
   async employerOwnsJob(employerId, jobId) {
@@ -246,7 +266,8 @@ const supabaseStore = {
   },
 
   async createJob(employerId, data) {
-    const { data: row, error } = await supabase.from('jobs').insert({
+    const deadline = requireFutureDeadline(data.applicationDeadline || data.application_deadline);
+    const payload = {
       employer_id: employerId,
       title: data.title,
       description: data.description,
@@ -256,10 +277,15 @@ const supabaseStore = {
       required_education: data.requiredEducation || null,
       required_certifications: data.requiredCertifications || [],
       experience_years: data.minExperience || 0,
+      application_deadline: deadline,
       status: 'open',
-    }).select().single();
+    };
+    const { data: row, error } = await supabase.from('jobs').insert(payload).select().single();
+    if (error && /application_deadline/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing application_deadline. Run supabase/add-job-deadline.sql in the SQL Editor.');
+    }
     if (error) throw error;
-    return mapJob(row, null, 0);
+    return enrichJob(mapJob(row, null, 0));
   },
 
   async listApplications({ jobId, applicantId, employerId } = {}) {
@@ -307,6 +333,11 @@ const supabaseStore = {
   },
 
   async createApplication(applicantId, data) {
+    await this.closeExpiredJobs();
+    const job = await this.getJob(data.jobId);
+    if (!job) throw new Error('Job not found');
+    const blocked = closedMessage(job);
+    if (blocked) throw new Error(blocked);
     const { data: row, error } = await supabase.from('applications').insert({
       job_id: data.jobId,
       applicant_id: applicantId,
@@ -430,7 +461,7 @@ const supabaseStore = {
     const analyses = await Promise.all(jobs.map((j) => this.getAnalysesForJob(j.id)));
     const analyzed = analyses.flat().length;
     return {
-      activeJobs: jobs.filter((j) => j.status === 'open').length,
+      activeJobs: jobs.filter((j) => j.acceptingApplications).length,
       totalApplications: apps.length,
       pendingReview: pending,
       shortlisted,
