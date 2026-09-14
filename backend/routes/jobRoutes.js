@@ -82,4 +82,31 @@ router.post('/', requireRole('employer'), async (req, res) => {
   }
 });
 
+router.patch('/:id', requireRole('admin'), async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (status && !['open', 'closed', 'draft'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid job status' });
+    }
+    const db = getDb();
+    const job = await db.getJob(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+    res.json(await db.updateJob(req.params.id, { status }));
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.delete('/:id', requireRole('admin'), async (req, res) => {
+  try {
+    const db = getDb();
+    const job = await db.getJob(req.params.id);
+    if (!job) return res.status(404).json({ message: 'Job not found' });
+    await db.deleteJob(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 module.exports = router;

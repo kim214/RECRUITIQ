@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "seed": "node scripts/seed.js",
     "seed:supabase": "node scripts/seed-supabase.js",
+    "create:admin": "node scripts/create-admin.js",
     "assign:employer": "node scripts/assign-employer.js",
     "setup:storage": "node scripts/setup-storage.js"
   },
@@ -20,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.12.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.1",
     "pdf-parse": "^2.4.5",
     "uuid": "^10.0.0",
     "word-extractor": "^1.0.4"

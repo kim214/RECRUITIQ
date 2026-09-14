@@ -36,11 +36,15 @@ router.post('/login', async (req, res) => {
     if (!user || !(await db.verifyPassword(user, password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+    if ((user.status || 'active') === 'banned') {
+      return res.status(403).json({ message: 'Your account has been suspended. Contact an administrator.' });
+    }
     const mapped = {
       id: user.id,
       email: user.email,
       fullName: user.full_name,
       role: user.role,
+      status: user.status || 'active',
       company: user.company,
     };
     const token = signToken(mapped);
@@ -60,11 +64,15 @@ router.get('/me', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: 'Session expired — please log in again' });
     }
+    if ((user.status || 'active') === 'banned') {
+      return res.status(401).json({ message: 'Your account has been suspended. Contact an administrator.' });
+    }
     const mapped = {
       id: user.id,
       email: user.email,
       fullName: user.full_name,
       role: user.role,
+      status: user.status || 'active',
       company: user.company,
     };
     const token = signToken({

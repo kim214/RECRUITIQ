@@ -11,9 +11,9 @@ function defaultDb() {
   const hash = (pw) => bcrypt.hashSync(pw, 10);
   return {
     users: [
-      { id: uuidv4(), email: 'admin@reqruit.com', password_hash: hash('admin123'), full_name: 'Platform Admin', role: 'admin', company: null, phone: null, created_at: now },
-      { id: uuidv4(), email: 'employer@reqruit.com', password_hash: hash('employer123'), full_name: 'Acme Corp HR', role: 'employer', company: 'Acme Corp', phone: null, created_at: now },
-      { id: uuidv4(), email: 'applicant@reqruit.com', password_hash: hash('applicant123'), full_name: 'Jane Doe', role: 'applicant', company: null, phone: '+254700000000', created_at: now },
+      { id: uuidv4(), email: 'admin@reqruit.com', password_hash: hash('admin123'), full_name: 'Platform Admin', role: 'admin', status: 'active', company: null, phone: null, created_at: now },
+      { id: uuidv4(), email: 'employer@reqruit.com', password_hash: hash('employer123'), full_name: 'Acme Corp HR', role: 'employer', status: 'active', company: 'Acme Corp', phone: null, created_at: now },
+      { id: uuidv4(), email: 'applicant@reqruit.com', password_hash: hash('applicant123'), full_name: 'Jane Doe', role: 'applicant', status: 'active', company: null, phone: '+254700000000', created_at: now },
     ],
     jobs: [],
     applications: [],
@@ -80,6 +80,7 @@ function mapUser(u) {
     fullName: rest.full_name,
     full_name: rest.full_name,
     role: rest.role,
+    status: rest.status || 'active',
     company: rest.company,
     phone: rest.phone,
     createdAt: rest.created_at,
@@ -202,10 +203,11 @@ const localStore = {
     }
     const user = {
       id: uuidv4(),
-      email,
+      email: email.toLowerCase(),
       password_hash: bcrypt.hashSync(password, 10),
       full_name: fullName,
       role,
+      status: 'active',
       company: company || null,
       phone: null,
       created_at: new Date().toISOString(),
@@ -222,6 +224,56 @@ const localStore = {
   async listUsers() {
     const db = read();
     return db.users.map(mapUser);
+  },
+
+  async updateUser(id, patch) {
+    const db = read();
+    const user = db.users.find((u) => u.id === id);
+    if (!user) throw new Error('User not found');
+    if (patch.fullName != null) user.full_name = patch.fullName;
+    if (patch.role != null) user.role = patch.role;
+    if (patch.company != null) user.company = patch.company;
+    if (patch.status != null) user.status = patch.status;
+    if (patch.password) user.password_hash = bcrypt.hashSync(patch.password, 10);
+    write(db);
+    return mapUser(user);
+  },
+
+  async deleteUser(id) {
+    const db = read();
+    const jobIds = new Set(db.jobs.filter((j) => j.employer_id === id).map((j) => j.id));
+    const appIds = new Set(
+      db.applications
+        .filter((a) => a.applicant_id === id || jobIds.has(a.job_id))
+        .map((a) => a.id)
+    );
+    db.ai_analyses = db.ai_analyses.filter((a) => !appIds.has(a.application_id));
+    db.applications = db.applications.filter((a) => !appIds.has(a.id));
+    db.jobs = db.jobs.filter((j) => j.employer_id !== id);
+    db.users = db.users.filter((u) => u.id !== id);
+    write(db);
+    return { ok: true };
+  },
+
+  async updateJob(id, patch) {
+    const db = read();
+    const job = db.jobs.find((j) => j.id === id);
+    if (!job) throw new Error('Job not found');
+    if (patch.status) job.status = patch.status;
+    if (patch.title) job.title = patch.title;
+    job.updated_at = new Date().toISOString();
+    write(db);
+    return this.getJob(id);
+  },
+
+  async deleteJob(id) {
+    const db = read();
+    const appIds = new Set(db.applications.filter((a) => a.job_id === id).map((a) => a.id));
+    db.ai_analyses = db.ai_analyses.filter((a) => !appIds.has(a.application_id));
+    db.applications = db.applications.filter((a) => a.job_id !== id);
+    db.jobs = db.jobs.filter((j) => j.id !== id);
+    write(db);
+    return { ok: true };
   },
 
   async listJobs({ employerId, status, openOnly } = {}) {
@@ -431,6 +483,8 @@ const localStore = {
     const db = read();
     const employers = db.users.filter((u) => u.role === 'employer').length;
     const applicants = db.users.filter((u) => u.role === 'applicant').length;
+    const admins = db.users.filter((u) => u.role === 'admin').length;
+    const bannedUsers = db.users.filter((u) => (u.status || 'active') === 'banned').length;
     const openJobs = db.jobs.filter((j) => j.status === 'open').length;
     const shortlisted = db.applications.filter((a) => a.status === 'shortlisted').length;
     const analyzed = db.ai_analyses.length;
@@ -441,6 +495,8 @@ const localStore = {
       totalUsers: db.users.length,
       employers,
       applicants,
+      admins,
+      bannedUsers,
       totalJobs: db.jobs.length,
       openJobs,
       totalApplications: db.applications.length,

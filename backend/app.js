@@ -39,6 +39,24 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api', authMiddleware);
+app.use('/api', async (req, res, next) => {
+  try {
+    const db = getDb();
+    let user = null;
+    if (req.user.email) {
+      user = await db.findUserByEmail(String(req.user.email).trim().toLowerCase());
+    }
+    if (!user && req.user.id) {
+      user = await db.findUserById(req.user.id);
+    }
+    if (user && (user.status || 'active') === 'banned') {
+      return res.status(401).json({ message: 'Your account has been suspended. Contact an administrator.' });
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.get('/api/stats/admin', async (req, res) => {
   try {

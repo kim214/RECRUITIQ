@@ -35,11 +35,11 @@ function mapUser(row) {
     fullName: row.full_name,
     full_name: row.full_name,
     role: row.role,
+    status: row.status || 'active',
     company: row.company,
     phone: row.phone,
     createdAt: row.created_at,
     created_at: row.created_at,
-    password_hash: row.password_hash,
   };
 }
 
@@ -137,14 +137,20 @@ const supabaseStore = {
     const existing = await this.findUserByEmail(email);
     if (existing) throw new Error('Email already registered');
     const id = uuidv4();
-    const { error } = await supabase.from('profiles').insert({
+    const payload = {
       id,
       email: email.toLowerCase(),
       password_hash: bcrypt.hashSync(password, 10),
       full_name: fullName,
       role,
+      status: 'active',
       company: company || null,
-    });
+    };
+    let { error } = await supabase.from('profiles').insert(payload);
+    if (error && /status/i.test(String(error.message || ''))) {
+      delete payload.status;
+      ({ error } = await supabase.from('profiles').insert(payload));
+    }
     if (error) throw error;
     return mapUser(await this.findUserById(id));
   },
@@ -157,6 +163,45 @@ const supabaseStore = {
     const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map(mapUser);
+  },
+
+  async updateUser(id, patch) {
+    const current = await this.findUserById(id);
+    if (!current) throw new Error('User not found');
+    const updates = { updated_at: new Date().toISOString() };
+    if (patch.fullName != null) updates.full_name = patch.fullName;
+    if (patch.role != null) updates.role = patch.role;
+    if (patch.company != null) updates.company = patch.company;
+    if (patch.status != null) updates.status = patch.status;
+    if (patch.password) updates.password_hash = bcrypt.hashSync(patch.password, 10);
+    let { error } = await supabase.from('profiles').update(updates).eq('id', id);
+    if (error && String(error.message || '').includes('status')) {
+      delete updates.status;
+      ({ error } = await supabase.from('profiles').update(updates).eq('id', id));
+    }
+    if (error) throw error;
+    return mapUser(await this.findUserById(id));
+  },
+
+  async deleteUser(id) {
+    const { error } = await supabase.from('profiles').delete().eq('id', id);
+    if (error) throw error;
+    return { ok: true };
+  },
+
+  async updateJob(id, patch) {
+    const updates = { updated_at: new Date().toISOString() };
+    if (patch.status) updates.status = patch.status;
+    if (patch.title) updates.title = patch.title;
+    const { error } = await supabase.from('jobs').update(updates).eq('id', id);
+    if (error) throw error;
+    return this.getJob(id);
+  },
+
+  async deleteJob(id) {
+    const { error } = await supabase.from('jobs').delete().eq('id', id);
+    if (error) throw error;
+    return { ok: true };
   },
 
   async listJobs({ employerId, status, openOnly } = {}) {
@@ -337,10 +382,23 @@ const supabaseStore = {
   },
 
   async adminStats() {
-    const [{ count: totalUsers }, { count: employers }, { count: applicants }, { count: totalJobs }, { count: openJobs }, { count: totalApplications }, { count: analyzed }, { count: shortlisted }] = await Promise.all([
+    const [
+      { count: totalUsers },
+      { count: employers },
+      { count: applicants },
+      { count: admins },
+      bannedRes,
+      { count: totalJobs },
+      { count: openJobs },
+      { count: totalApplications },
+      { count: analyzed },
+      { count: shortlisted },
+    ] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'employer'),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'applicant'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'admin'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'banned'),
       supabase.from('jobs').select('*', { count: 'exact', head: true }),
       supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'open'),
       supabase.from('applications').select('*', { count: 'exact', head: true }),
@@ -351,6 +409,8 @@ const supabaseStore = {
       totalUsers: totalUsers || 0,
       employers: employers || 0,
       applicants: applicants || 0,
+      admins: admins || 0,
+      bannedUsers: bannedRes.error ? 0 : (bannedRes.count || 0),
       totalJobs: totalJobs || 0,
       openJobs: openJobs || 0,
       totalApplications: totalApplications || 0,
