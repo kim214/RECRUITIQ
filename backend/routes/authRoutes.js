@@ -1,10 +1,20 @@
 const express = require('express');
 const { getDb } = require('../lib/db');
-const { signToken, authMiddleware } = require('../middleware/auth');
+const { signToken, authMiddleware, getJwtSecret } = require('../middleware/auth');
 const { authLimiter } = require('../lib/rateLimit');
 const { applicantCodeOf } = require('../lib/privacy');
 
 const router = express.Router();
+
+// Fail before creating accounts if tokens can't be signed (e.g. weak JWT_SECRET in production).
+router.use((_req, _res, next) => {
+  try {
+    getJwtSecret();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 function publicUser(user) {
   return {

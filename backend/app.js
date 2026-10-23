@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDb, getDb } = require('./lib/db');
-const { authMiddleware } = require('./middleware/auth');
+const { initDb, getDb, useSupabase } = require('./lib/db');
+const { authMiddleware, jwtSecretStatus } = require('./middleware/auth');
 const { resolveUserId } = require('./lib/resolveUser');
 const { corsOriginDelegate } = require('./lib/corsOrigins');
 const { presentActivity } = require('./lib/privacy');
@@ -32,6 +32,22 @@ function ensureDb() {
   }
   return dbReady;
 }
+// Registered before the DB middleware so it still answers when config is broken.
+app.get('/api/health', (_req, res) => {
+  const config = {
+    jwtSecret: jwtSecretStatus(),
+    database: useSupabase() ? 'supabase' : process.env.VERCEL ? 'missing' : 'local',
+  };
+  const healthy = config.jwtSecret === 'ok' && config.database !== 'missing';
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'misconfigured',
+    config,
+    commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || undefined,
+    timestamp: new Date().toISOString(),
+    env: process.env.VERCEL ? 'vercel' : 'local',
+  });
+});
+
 app.use(async (_req, res, next) => {
   try {
     await ensureDb();
@@ -43,9 +59,6 @@ app.use(async (_req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.VERCEL ? 'vercel' : 'local' });
-});
 
 app.use('/api', authMiddleware);
 app.use('/api', async (req, res, next) => {

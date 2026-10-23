@@ -27,15 +27,36 @@ function resolveJwtSecret(env = process.env) {
   return secret || DEV_SECRET;
 }
 
-const JWT_SECRET = resolveJwtSecret();
+// Resolved lazily so a bad JWT_SECRET fails only the routes that need it,
+// instead of crashing the whole serverless function at load time.
+let jwtSecret = null;
+function getJwtSecret() {
+  if (!jwtSecret) jwtSecret = resolveJwtSecret();
+  return jwtSecret;
+}
+
+function jwtSecretStatus(env = process.env) {
+  try {
+    resolveJwtSecret(env);
+    return 'ok';
+  } catch {
+    return 'invalid';
+  }
+}
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Authentication required' });
   }
+  let secret;
   try {
-    const payload = jwt.verify(header.slice(7), JWT_SECRET);
+    secret = getJwtSecret();
+  } catch (err) {
+    return next(err);
+  }
+  try {
+    const payload = jwt.verify(header.slice(7), secret);
     req.user = payload;
     next();
   } catch {
@@ -55,9 +76,9 @@ function requireRole(...roles) {
 function signToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role, fullName: user.full_name || user.fullName },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '7d' },
   );
 }
 
-module.exports = { authMiddleware, requireRole, signToken, JWT_SECRET, resolveJwtSecret };
+module.exports = { authMiddleware, requireRole, signToken, getJwtSecret, jwtSecretStatus, resolveJwtSecret };
