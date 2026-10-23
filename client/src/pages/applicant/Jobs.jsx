@@ -111,12 +111,12 @@ export default function ApplicantJobs() {
             {ok && <p className="mb-3 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700">{ok}</p>}
             <label className="mb-1 block text-sm font-semibold">Cover Letter *</label>
             <textarea name="coverLetter" required rows={4} className="mb-4 w-full rounded-xl border-2 border-slate-200 p-3" />
-            <label className="mb-1 block text-sm font-semibold">Resume (PDF or DOC) *</label>
-            <input name="resume" type="file" accept=".pdf,.doc,.docx" className="mb-4 w-full" />
+            <label className="mb-1 block text-sm font-semibold">Resume (PDF, DOC, or TXT) *</label>
+            <input name="resume" type="file" accept=".pdf,.doc,.docx,.txt" className="mb-4 w-full" />
             <label className="mb-1 block text-sm font-semibold">Academic Transcript</label>
-            <input name="transcript" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" className="mb-4 w-full" />
+            <input name="transcript" type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" className="mb-4 w-full" />
             <label className="mb-1 block text-sm font-semibold">Certificates</label>
-            <input name="certificates" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" className="mb-4 w-full" />
+            <input name="certificates" type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" className="mb-4 w-full" />
             <button disabled={busy} className="w-full rounded-xl bg-brand-500 py-3 font-semibold text-white">{busy ? 'Submitting...' : 'Submit Application'}</button>
           </form>
         </div>

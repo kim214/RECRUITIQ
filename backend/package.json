@@ -6,11 +6,21 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node scripts/seed.js",
+    "seed": "node scripts/seed-supabase.js",
     "seed:supabase": "node scripts/seed-supabase.js",
     "create:admin": "node scripts/create-admin.js",
     "assign:employer": "node scripts/assign-employer.js",
-    "setup:storage": "node scripts/setup-storage.js"
+    "assign:applicant-codes": "node scripts/assign-applicant-codes.js",
+    "setup:storage": "node scripts/setup-storage.js",
+    "test:ai": "node --test lib/ai/ollamaProvider.test.js lib/jobRequirementAnalyzer.test.js lib/documentPipeline.test.js lib/candidateProfileExtractor.test.js lib/supportingDocumentAnalyzer.test.js lib/evidenceBuilder.test.js lib/embeddingService.test.js lib/requirementMatcher.test.js lib/scoringEngine.test.js lib/analysisQueue.test.js lib/ranker.test.js lib/access.test.js lib/corsOrigins.test.js lib/rateLimit.test.js middleware/auth.test.js lib/analysisAudit.test.js lib/analysisFailures.test.js lib/analysisCache.test.js lib/e2ePipeline.test.js lib/documentUrlPolicy.test.js lib/ocrService.test.js lib/vmHealth.test.js lib/hiring.test.js lib/privacy.test.js",
+    "test:e2e": "node --test lib/e2ePipeline.test.js",
+    "check:ai": "node scripts/check-ai-service.js",
+    "pull:embeddings": "node scripts/pull-vm-models.js",
+    "ocr:server": "node scripts/ocr-server.js",
+    "test:job-profile": "node scripts/test-job-requirement-profile.js",
+    "test:docs": "node --test lib/documentPipeline.test.js && node scripts/test-document-pipeline.js",
+    "test:candidate-profile": "node scripts/test-candidate-profile.js",
+    "test:supporting-docs": "node scripts/test-supporting-documents.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

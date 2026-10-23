@@ -2,6 +2,8 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { enrichJob, requireFutureDeadline, closedMessage } = require('./jobAvailability');
+const { hiringMissingError, mapNotification } = require('./hiring');
+const { generateApplicantCode, derivedApplicantCode } = require('./privacy');
 
 let supabase;
 
@@ -39,6 +41,8 @@ function mapUser(row) {
     status: row.status || 'active',
     company: row.company,
     phone: row.phone,
+    applicantCode: row.role === 'applicant' ? (row.applicant_code || derivedApplicantCode(row.id)) : null,
+    applicant_code: row.role === 'applicant' ? (row.applicant_code || derivedApplicantCode(row.id)) : null,
     createdAt: row.created_at,
     created_at: row.created_at,
   };
@@ -62,6 +66,12 @@ function mapJob(row, employerName, appCount) {
     experience_years: row.experience_years,
     applicationDeadline: row.application_deadline || null,
     application_deadline: row.application_deadline || null,
+    requirementProfile: row.requirement_profile || null,
+    requirement_profile: row.requirement_profile || null,
+    embeddingCache: row.embedding_cache || null,
+    embedding_cache: row.embedding_cache || null,
+    scoringWeights: row.scoring_weights || null,
+    scoring_weights: row.scoring_weights || null,
     status: row.status,
     employerId: row.employer_id,
     employer_id: row.employer_id,
@@ -81,6 +91,7 @@ function mapApplication(row, applicant, job, analysis) {
     jobTitle: job?.title || 'Unknown',
     applicantId: row.applicant_id,
     applicant_id: row.applicant_id,
+    applicantCode: applicant?.applicant_code || derivedApplicantCode(row.applicant_id),
     applicantName: applicant?.full_name || 'Unknown',
     applicantEmail: applicant?.email || '',
     status,
@@ -91,9 +102,23 @@ function mapApplication(row, applicant, job, analysis) {
     resume_url: row.resume_url,
     transcriptUrl: row.transcript_url,
     certificatesUrl: row.certificates_url,
-    aiScore: analysis?.overall_score ?? null,
+    candidateProfile: row.candidate_profile || null,
+    candidate_profile: row.candidate_profile || null,
+    supportingDocuments: row.supporting_documents || null,
+    supporting_documents: row.supporting_documents || null,
+    evidence: row.evidence || null,
+    embeddingCache: row.embedding_cache || null,
+    embedding_cache: row.embedding_cache || null,
+    requirementMatches: row.requirement_matches || null,
+    requirement_matches: row.requirement_matches || null,
+    scoreBreakdown: row.score_breakdown || null,
+    score_breakdown: row.score_breakdown || null,
+    analysisStatus: row.analysis_status || null,
+    analysis_status: row.analysis_status || null,
+    aiScore: row.score_breakdown?.overall_score ?? analysis?.overall_score ?? null,
     aiSummary: analysis?.ai_summary ?? null,
     appliedAt: row.applied_at,
+    createdAt: row.applied_at,
     updatedAt: row.updated_at,
     updated_at: row.updated_at,
     analysis: analysis ? {
@@ -105,8 +130,17 @@ function mapApplication(row, applicant, job, analysis) {
       weaknesses: analysis.weaknesses,
       recommendation: analysis.recommendation,
       summary: analysis.ai_summary,
-      documentsReviewed: analysis.skills_match?.documentsReviewed || analysis.documents_reviewed || [],
-      documentsFailed: analysis.skills_match?.documentsFailed || analysis.documents_failed || [],
+      documentsReviewed: analysis.skills_match?.documentsReviewed || analysis.documents_reviewed || analysis.analysis_audit?.documents?.analyzed || [],
+      documentsFailed: analysis.skills_match?.documentsFailed || analysis.documents_failed || analysis.analysis_audit?.documents?.failed || [],
+      semanticMatch: analysis.skills_match?.semanticMatch || analysis.semantic_match || null,
+      scoreBreakdown: analysis.score_breakdown || analysis.skills_match?.scoreBreakdown || row.score_breakdown || null,
+      matchLabel: analysis.score_breakdown?.match_label || analysis.skills_match?.scoreBreakdown?.match_label || row.score_breakdown?.match_label || null,
+      modelVersion: analysis.model_version || analysis.analysis_audit?.model || null,
+      analysisVersion: analysis.analysis_version || analysis.analysis_audit?.analysis_version || null,
+      scoringVersion: analysis.scoring_version || analysis.analysis_audit?.scoring_version || null,
+      embeddingModel: analysis.embedding_model || analysis.analysis_audit?.embedding_model || null,
+      analyzedAt: analysis.analyzed_at || analysis.analysis_audit?.timestamp || null,
+      audit: analysis.analysis_audit || null,
     } : null,
   };
 }
@@ -118,6 +152,39 @@ const supabaseStore = {
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const { error } = await supabase.from('profiles').select('id').limit(1);
     if (error) throw error;
+    await this.ensureApplicantCodes().catch((err) => {
+      console.warn('Applicant ID backfill skipped:', err.message);
+    });
+  },
+
+  async ensureApplicantCodes() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, role, applicant_code')
+      .eq('role', 'applicant');
+    if (error) {
+      if (/applicant_code|schema cache/i.test(String(error.message || ''))) {
+        throw new Error('Database is missing applicant_code. Run supabase/add-applicant-code.sql in the SQL Editor.');
+      }
+      throw error;
+    }
+    const missing = (data || []).filter((row) => !row.applicant_code);
+    let updated = 0;
+    for (const row of missing) {
+      const code = derivedApplicantCode(row.id);
+      const { error: upErr } = await supabase
+        .from('profiles')
+        .update({ applicant_code: code })
+        .eq('id', row.id);
+      if (!upErr) {
+        updated += 1;
+        row.applicant_code = code;
+      }
+    }
+    if (updated) {
+      console.log(`Assigned applicant IDs to ${updated} existing applicant(s)`);
+    }
+    return { total: (data || []).length, updated };
   },
 
   async findUserByEmail(email) {
@@ -127,12 +194,22 @@ const supabaseStore = {
       .eq('email', email.toLowerCase())
       .maybeSingle();
     if (error) throw error;
+    if (data?.role === 'applicant' && !data.applicant_code) {
+      const code = derivedApplicantCode(data.id);
+      const { error: codeErr } = await supabase.from('profiles').update({ applicant_code: code }).eq('id', data.id);
+      if (!codeErr) data.applicant_code = code;
+    }
     return data;
   },
 
   async findUserById(id) {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
+    if (data?.role === 'applicant' && !data.applicant_code) {
+      const code = derivedApplicantCode(data.id);
+      const { error: codeErr } = await supabase.from('profiles').update({ applicant_code: code }).eq('id', data.id);
+      if (!codeErr) data.applicant_code = code;
+    }
     return data;
   },
 
@@ -149,9 +226,18 @@ const supabaseStore = {
       status: 'active',
       company: company || null,
     };
+    if (role === 'applicant') payload.applicant_code = generateApplicantCode();
     let { error } = await supabase.from('profiles').insert(payload);
+    if (error && /applicant_code/i.test(String(error.message || ''))) {
+      delete payload.applicant_code;
+      ({ error } = await supabase.from('profiles').insert(payload));
+    }
     if (error && /status/i.test(String(error.message || ''))) {
       delete payload.status;
+      ({ error } = await supabase.from('profiles').insert(payload));
+    }
+    if (error && /applicant_code/i.test(String(error.message || ''))) {
+      delete payload.applicant_code;
       ({ error } = await supabase.from('profiles').insert(payload));
     }
     if (error) throw error;
@@ -197,7 +283,20 @@ const supabaseStore = {
     if (patch.status) updates.status = patch.status;
     if (patch.title) updates.title = patch.title;
     if (patch.applicationDeadline !== undefined) updates.application_deadline = patch.applicationDeadline || null;
+    if (patch.requirementProfile !== undefined) updates.requirement_profile = patch.requirementProfile;
+    if (patch.requiredSkills) updates.required_skills = patch.requiredSkills;
+    if (patch.embeddingCache !== undefined) updates.embedding_cache = patch.embeddingCache;
+    if (patch.scoringWeights !== undefined) updates.scoring_weights = patch.scoringWeights;
     const { error } = await supabase.from('jobs').update(updates).eq('id', id);
+    if (error && /requirement_profile/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing requirement_profile. Run supabase/add-job-requirement-profile.sql in the SQL Editor.');
+    }
+    if (error && /embedding_cache/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing embedding_cache. Run supabase/add-embedding-cache.sql in the SQL Editor.');
+    }
+    if (error && /scoring_weights/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing scoring_weights. Run supabase/add-scoring-engine.sql in the SQL Editor.');
+    }
     if (error) throw error;
     return this.getJob(id);
   },
@@ -303,7 +402,7 @@ const supabaseStore = {
 
     const [{ data: jobs }, { data: users }, { data: analyses }] = await Promise.all([
       supabase.from('jobs').select('id, title, employer_id').in('id', jobIds),
-      supabase.from('profiles').select('id, full_name, email').in('id', applicantIds),
+      supabase.from('profiles').select('id, full_name, email, applicant_code, phone').in('id', applicantIds),
       supabase.from('ai_analyses').select('*').in('application_id', appIds),
     ]);
 
@@ -362,6 +461,41 @@ const supabaseStore = {
     return this.getApplication(id);
   },
 
+  async updateApplication(id, patch) {
+    const updates = { updated_at: new Date().toISOString() };
+    if (patch.candidateProfile !== undefined) updates.candidate_profile = patch.candidateProfile;
+    if (patch.supportingDocuments !== undefined) updates.supporting_documents = patch.supportingDocuments;
+    if (patch.evidence !== undefined) updates.evidence = patch.evidence;
+    if (patch.embeddingCache !== undefined) updates.embedding_cache = patch.embeddingCache;
+    if (patch.requirementMatches !== undefined) updates.requirement_matches = patch.requirementMatches;
+    if (patch.scoreBreakdown !== undefined) updates.score_breakdown = patch.scoreBreakdown;
+    if (patch.analysisStatus !== undefined) updates.analysis_status = patch.analysisStatus;
+    const { error } = await supabase.from('applications').update(updates).eq('id', id);
+    if (error && /candidate_profile/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing candidate_profile. Run supabase/add-candidate-profile.sql in the SQL Editor.');
+    }
+    if (error && /supporting_documents/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing supporting_documents. Run supabase/add-supporting-documents.sql in the SQL Editor.');
+    }
+    if (error && /column .*evidence/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing evidence. Run supabase/add-application-evidence.sql in the SQL Editor.');
+    }
+    if (error && /embedding_cache/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing embedding_cache. Run supabase/add-embedding-cache.sql in the SQL Editor.');
+    }
+    if (error && /requirement_matches/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing requirement_matches. Run supabase/add-requirement-matches.sql in the SQL Editor.');
+    }
+    if (error && /score_breakdown/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing score_breakdown. Run supabase/add-scoring-engine.sql in the SQL Editor.');
+    }
+    if (error && /analysis_status/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing analysis_status. Run supabase/add-analysis-status.sql in the SQL Editor.');
+    }
+    if (error) throw error;
+    return this.getApplication(id);
+  },
+
   async saveAnalysis(analysis) {
     const { data: existing } = await supabase.from('ai_analyses').select('id').eq('application_id', analysis.application_id).maybeSingle();
     const payload = {
@@ -372,6 +506,8 @@ const supabaseStore = {
         ...(analysis.skills_match || {}),
         documentsReviewed: analysis.documents_reviewed || [],
         documentsFailed: analysis.documents_failed || [],
+        semanticMatch: analysis.semantic_match || null,
+        scoreBreakdown: analysis.score_breakdown || null,
       },
       education_match: analysis.education_match,
       experience_match: analysis.experience_match,
@@ -379,15 +515,26 @@ const supabaseStore = {
       strengths: analysis.strengths || [],
       weaknesses: analysis.weaknesses || [],
       recommendation: analysis.recommendation,
-      model_version: analysis.model_version || 'gpt-4o',
+      model_version: analysis.model_version || analysis.analysis_audit?.model || 'ollama',
+      analysis_version: analysis.analysis_version || analysis.analysis_audit?.analysis_version || null,
+      scoring_version: analysis.scoring_version || analysis.analysis_audit?.scoring_version || null,
+      embedding_model: analysis.embedding_model || analysis.analysis_audit?.embedding_model || null,
+      analysis_audit: analysis.analysis_audit || null,
+      analyzed_at: analysis.analyzed_at || analysis.analysis_audit?.timestamp || new Date().toISOString(),
     };
     if (existing) {
       const { data, error } = await supabase.from('ai_analyses').update(payload).eq('id', existing.id).select().single();
+      if (error && /analysis_audit|analysis_version|scoring_version|embedding_model/i.test(String(error.message || ''))) {
+        throw new Error('Database is missing analysis audit columns. Run supabase/add-analysis-audit.sql in the SQL Editor.');
+      }
       if (error) throw error;
       await supabase.from('applications').update({ status: 'ai_screening' }).eq('id', analysis.application_id).in('status', ['applied']);
       return data;
     }
     const { data, error } = await supabase.from('ai_analyses').insert(payload).select().single();
+    if (error && /analysis_audit|analysis_version|scoring_version|embedding_model/i.test(String(error.message || ''))) {
+      throw new Error('Database is missing analysis audit columns. Run supabase/add-analysis-audit.sql in the SQL Editor.');
+    }
     if (error) throw error;
     await supabase.from('applications').update({ status: 'ai_screening' }).eq('id', analysis.application_id).in('status', ['applied']);
     return data;
@@ -405,10 +552,13 @@ const supabaseStore = {
     const apps = await this.listApplications({ employerId });
     return apps.slice(0, 20).map((a) => ({
       applicationId: a.id,
+      applicantId: a.applicantId,
+      applicantCode: a.applicantCode,
       applicantName: a.applicantName,
       jobTitle: a.jobTitle,
       stageLabel: a.stageLabel,
       updatedAt: a.updatedAt,
+      createdAt: a.updatedAt,
     }));
   },
 
@@ -465,6 +615,8 @@ const supabaseStore = {
       totalApplications: apps.length,
       pendingReview: pending,
       shortlisted,
+      hired: byStage.hired || 0,
+      rejected: byStage.rejected || 0,
       analyzed,
       shortlistRate: apps.length ? Math.round((shortlisted / apps.length) * 100) : 0,
       byStage,
@@ -481,6 +633,110 @@ const supabaseStore = {
       else pipeline.submitted.push(a);
     });
     return { pipeline };
+  },
+
+  async createNotification({ userId, type, title, body, link, meta }) {
+    if (!userId) return null;
+    const { data, error } = await supabase.from('notifications').insert({
+      user_id: userId,
+      type: type || 'info',
+      title: title || 'Update',
+      body: body || '',
+      link: link || null,
+      meta: meta || null,
+    }).select('*').single();
+    if (error) throw hiringMissingError(error);
+    return mapNotification(data);
+  },
+
+  async listNotifications(userId, { unreadOnly = false } = {}) {
+    let q = supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+    if (unreadOnly) q = q.is('read_at', null);
+    const { data, error } = await q;
+    if (error) throw hiringMissingError(error);
+    return (data || []).map(mapNotification);
+  },
+
+  async markNotificationRead(id, userId) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('*')
+      .maybeSingle();
+    if (error) throw hiringMissingError(error);
+    if (!data) throw new Error('Notification not found');
+    return mapNotification(data);
+  },
+
+  async markAllNotificationsRead(userId) {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .is('read_at', null);
+    if (error) throw hiringMissingError(error);
+    return this.listNotifications(userId);
+  },
+
+  async createInterview(fields) {
+    const payload = {
+      ...fields,
+      status: fields.status || 'scheduled',
+      applicant_rsvp: fields.applicant_rsvp || 'pending',
+    };
+    const { data, error } = await supabase.from('interviews').insert(payload).select('*').single();
+    if (error) throw hiringMissingError(error);
+    return data;
+  },
+
+  async updateInterview(id, patch) {
+    const { data, error } = await supabase
+      .from('interviews')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+    if (error) throw hiringMissingError(error);
+    if (!data) throw new Error('Interview not found');
+    return data;
+  },
+
+  async getInterview(id) {
+    const { data, error } = await supabase.from('interviews').select('*').eq('id', id).maybeSingle();
+    if (error) throw hiringMissingError(error);
+    return data || null;
+  },
+
+  async listInterviews({ employerId, applicantId, applicationId } = {}) {
+    let q = supabase.from('interviews').select('*').order('starts_at', { ascending: true });
+    if (employerId) q = q.eq('employer_id', employerId);
+    if (applicantId) q = q.eq('applicant_id', applicantId);
+    if (applicationId) q = q.eq('application_id', applicationId);
+    const { data, error } = await q;
+    if (error) throw hiringMissingError(error);
+    return data || [];
+  },
+
+  async listMessages(applicationId) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('application_id', applicationId)
+      .order('created_at', { ascending: true });
+    if (error) throw hiringMissingError(error);
+    return data || [];
+  },
+
+  async createMessage({ applicationId, senderId, body }) {
+    const { data, error } = await supabase.from('messages').insert({
+      application_id: applicationId,
+      sender_id: senderId,
+      body,
+    }).select('*').single();
+    if (error) throw hiringMissingError(error);
+    return data;
   },
 };
 

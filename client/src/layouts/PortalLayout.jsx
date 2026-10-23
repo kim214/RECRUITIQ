@@ -1,7 +1,9 @@
 import { NavLink, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import Logo from '../components/Logo.jsx';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { initials } from '../utils/format.js';
+import { api } from '../api/client.js';
 
 const NAV = {
   employer: {
@@ -12,8 +14,10 @@ const NAV = {
       { to: '/employer/jobs/new', label: 'Post Job' },
       { to: '/employer/candidates', label: 'Candidates' },
       { to: '/employer/shortlist', label: 'Shortlisting' },
+      { to: '/employer/interviews', label: 'Interviews' },
       { to: '/employer/rankings', label: 'AI Rankings' },
       { to: '/employer/reports', label: 'Reports' },
+      { to: '/employer/notifications', label: 'Notifications', notify: true },
     ],
   },
   applicant: {
@@ -22,6 +26,8 @@ const NAV = {
       { to: '/applicant', label: 'Dashboard', end: true },
       { to: '/applicant/jobs', label: 'Browse Jobs' },
       { to: '/applicant/applications', label: 'My Applications' },
+      { to: '/applicant/interviews', label: 'Interviews' },
+      { to: '/applicant/notifications', label: 'Notifications', notify: true },
       { to: '/applicant/profile', label: 'Profile' },
     ],
   },
@@ -40,12 +46,44 @@ const NAV = {
 export default function PortalLayout({ role, title, subtitle, action, children }) {
   const { user, logout } = useAuth();
   const nav = NAV[role];
+  const [unread, setUnread] = useState(0);
   const sidebarTone =
     role === 'applicant'
       ? 'from-[#0c1222] via-[#0f2a2a] to-[#0d1f1e]'
       : role === 'admin'
         ? 'from-[#0c1222] via-[#1a1035] to-[#150d28]'
         : 'from-[#0c1222] via-[#111827] to-[#0f172a]';
+
+  useEffect(() => {
+    if (!user) return undefined;
+    let alive = true;
+    async function load() {
+      try {
+        const data = await api.getNotifications(true);
+        if (alive) setUnread(data.unreadCount || 0);
+      } catch {
+        if (alive) setUnread(0);
+      }
+    }
+    load();
+    const timer = setInterval(load, 20000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [user]);
+
+  function navLabel(item) {
+    if (!item.notify || !unread) return item.label;
+    return (
+      <span className="flex items-center justify-between gap-2">
+        <span>{item.label}</span>
+        <span className="rounded-full bg-cyan-400 px-1.5 py-0.5 text-[10px] font-bold text-slate-900">
+          {unread > 9 ? '9+' : unread}
+        </span>
+      </span>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -66,7 +104,7 @@ export default function PortalLayout({ role, title, subtitle, action, children }
                 }`
               }
             >
-              {item.label}
+              {navLabel(item)}
             </NavLink>
           ))}
         </nav>
@@ -107,7 +145,7 @@ export default function PortalLayout({ role, title, subtitle, action, children }
                 `whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${isActive ? 'bg-brand-500 text-white' : 'bg-slate-100 text-ink-600'}`
               }
             >
-              {item.label}
+              {navLabel(item)}
             </NavLink>
           ))}
         </div>

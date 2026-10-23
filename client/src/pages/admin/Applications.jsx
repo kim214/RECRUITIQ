@@ -4,7 +4,7 @@ import Loader from '../../components/Loader.jsx';
 import Badge from '../../components/Badge.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import { api } from '../../api/client.js';
-import { formatDate } from '../../utils/format.js';
+import { formatDate, recommendationLabel } from '../../utils/format.js';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -82,7 +82,11 @@ export default function AdminApplications() {
                   </td>
                   <td className="px-4 py-3">{a.jobTitle}</td>
                   <td className="px-4 py-3"><Badge tone={stageTone(a.status)}>{a.stageLabel || a.status}</Badge></td>
-                  <td className="px-4 py-3">{a.aiScore != null ? Math.round(a.aiScore) : '—'}</td>
+                  <td className="px-4 py-3">
+                    {a.aiScore != null
+                      ? `${Math.round(a.aiScore)}% · ${a.analysis?.matchLabel || recommendationLabel(a.aiScore, a.analysis?.recommendation)}`
+                      : '—'}
+                  </td>
                   <td className="px-4 py-3 text-ink-500">{formatDate(a.appliedAt)}</td>
                 </tr>
               ))}

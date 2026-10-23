@@ -48,12 +48,17 @@ export default function Register() {
             </button>
           ))}
         </div>
+        {role === 'applicant' && (
+          <p className="mt-3 text-xs leading-relaxed text-slate-300">
+            Employers will never see your name. After you apply, you appear only as a generated applicant ID (for example RQ-K7M2PQ). Messages from employers arrive as RecruitIQ.
+          </p>
+        )}
         <input name="fullName" required placeholder="Full name" className="mt-4 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
         {role === 'employer' && (
           <input name="company" placeholder="Company name" className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
         )}
         <input name="email" type="email" required placeholder="Email address" className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
-        <input name="password" type="password" required minLength={6} placeholder="Password (6+ characters)" className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
+        <input name="password" type="password" required minLength={8} placeholder="Password (8+ characters)" className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none" />
         <div className="mt-5 flex gap-3">
           <button disabled={busy} className="flex-1 rounded-xl bg-emerald-400 py-3 font-bold text-ink-900">{busy ? 'Creating...' : 'Sign Up'}</button>
           <Link to="/login" className="flex-1 rounded-xl border border-white/20 py-3 text-center font-semibold">Login</Link>

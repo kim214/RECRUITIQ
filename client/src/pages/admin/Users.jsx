@@ -249,7 +249,7 @@ export default function AdminUsers() {
             {form.role === 'employer' && (
               <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Company (optional)" className="mt-3 w-full rounded-xl border-2 border-slate-200 px-3 py-2.5" />
             )}
-            <input type="password" minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Password (leave blank to auto-generate)" className="mt-3 w-full rounded-xl border-2 border-slate-200 px-3 py-2.5" />
+            <input type="password" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Password (leave blank to auto-generate)" className="mt-3 w-full rounded-xl border-2 border-slate-200 px-3 py-2.5" />
             <div className="mt-5 flex gap-3">
               <button disabled={busyId === 'create'} className="flex-1 rounded-xl bg-brand-500 py-2.5 font-semibold text-white disabled:opacity-60">
                 {busyId === 'create' ? 'Creating...' : 'Create user'}

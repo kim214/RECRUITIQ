@@ -362,11 +362,20 @@ function assessDataQuality(text, docMeta) {
 
 async function prepareApplicationContext(application, options = {}) {
   const { extractApplicationDocuments } = require('./documentExtractor');
+  const { assembleLlmText, budgetText, chunkText } = require('./documentPipeline');
   const coverText = gatherApplicationText(application);
   const docResult = await extractApplicationDocuments(application, options);
 
   const sections = [];
-  if (coverText) sections.push({ label: 'Cover Letter', text: coverText });
+  if (coverText) {
+    const llmCover = budgetText(coverText, 1500);
+    sections.push({
+      label: 'Cover Letter',
+      text: coverText,
+      llmText: llmCover,
+      chunks: chunkText(llmCover),
+    });
+  }
   (docResult.sections || []).forEach((s) => sections.push(s));
 
   const combinedText = sections
@@ -375,9 +384,15 @@ async function prepareApplicationContext(application, options = {}) {
 
   const parsedLabels = (docResult.sources || []).filter((s) => s.ok).map((s) => s.label);
   const failedLabels = (docResult.sources || []).filter((s) => !s.ok).map((s) => s.label);
+  const scannedLabels = (docResult.sources || []).filter((s) => s.scanned && !s.ok).map((s) => s.label);
+  const coverChunks = sections
+    .filter((s) => s.label === 'Cover Letter')
+    .flatMap((s) => (s.chunks || []).map((text) => ({ label: s.label, text })));
 
   return {
     combinedText,
+    llmText: assembleLlmText(sections),
+    chunks: [...coverChunks, ...(docResult.chunks || [])],
     sections,
     documentSources: docResult.sources || [],
     documentMeta: {
@@ -385,6 +400,8 @@ async function prepareApplicationContext(application, options = {}) {
       failedCount: docResult.failedCount || 0,
       parsedLabels,
       failedLabels,
+      scannedLabels,
+      truncated: sections.some((s) => s.truncated),
     },
   };
 }
@@ -481,4 +498,6 @@ module.exports = {
   gatherApplicationText,
   extractExperienceYears,
   scoreSkills,
+  skillMentioned,
+  normalizeSkill,
 };

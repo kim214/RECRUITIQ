@@ -1,10 +1,24 @@
 const express = require('express');
 const { getDb } = require('../lib/db');
 const { signToken, authMiddleware } = require('../middleware/auth');
+const { authLimiter } = require('../lib/rateLimit');
+const { applicantCodeOf } = require('../lib/privacy');
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
+function publicUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.full_name || user.fullName,
+    role: user.role,
+    status: user.status || 'active',
+    company: user.company,
+    applicantCode: user.role === 'applicant' ? applicantCodeOf(user) : null,
+  };
+}
+
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { email, password, fullName, role, company } = req.body;
     if (!email || !password || !fullName || !role) {
@@ -13,19 +27,20 @@ router.post('/register', async (req, res) => {
     if (!['employer', 'applicant'].includes(role)) {
       return res.status(400).json({ message: 'Role must be employer or applicant' });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
     const db = getDb();
     const user = await db.createUser({ email, password, fullName, role, company });
-    const token = signToken(user);
-    res.status(201).json({ token, user });
+    const mapped = publicUser(user);
+    const token = signToken(mapped);
+    res.status(201).json({ token, user: mapped });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -39,14 +54,7 @@ router.post('/login', async (req, res) => {
     if ((user.status || 'active') === 'banned') {
       return res.status(403).json({ message: 'Your account has been suspended. Contact an administrator.' });
     }
-    const mapped = {
-      id: user.id,
-      email: user.email,
-      fullName: user.full_name,
-      role: user.role,
-      status: user.status || 'active',
-      company: user.company,
-    };
+    const mapped = publicUser(user);
     const token = signToken(mapped);
     res.json({ token, user: mapped });
   } catch (err) {
@@ -67,14 +75,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     if ((user.status || 'active') === 'banned') {
       return res.status(401).json({ message: 'Your account has been suspended. Contact an administrator.' });
     }
-    const mapped = {
-      id: user.id,
-      email: user.email,
-      fullName: user.full_name,
-      role: user.role,
-      status: user.status || 'active',
-      company: user.company,
-    };
+    const mapped = publicUser(user);
     const token = signToken({
       id: user.id,
       email: user.email,

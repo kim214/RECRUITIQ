@@ -2,6 +2,7 @@ const express = require('express');
 const { getDb } = require('../lib/db');
 const { requireRole } = require('../middleware/auth');
 const { resolveUserId } = require('../lib/resolveUser');
+const { ensureJobRequirementProfile } = require('../lib/jobRequirementAnalyzer');
 
 const router = express.Router();
 
@@ -79,7 +80,8 @@ router.post('/', requireRole('employer'), async (req, res) => {
     const employerId = await resolveUserId(req);
     if (!employerId) return res.status(401).json({ message: 'Employer account not found — log in again' });
     const job = await db.createJob(employerId, req.body);
-    res.status(201).json(job);
+    const withProfile = await ensureJobRequirementProfile(db, job);
+    res.status(201).json(withProfile);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

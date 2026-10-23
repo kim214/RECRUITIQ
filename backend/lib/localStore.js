@@ -3,6 +3,8 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { enrichJob, requireFutureDeadline, closedMessage, deadlineHasPassed } = require('./jobAvailability');
+const { mapNotification } = require('./hiring');
+const { generateApplicantCode, derivedApplicantCode } = require('./privacy');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -14,11 +16,14 @@ function defaultDb() {
     users: [
       { id: uuidv4(), email: 'admin@reqruit.com', password_hash: hash('admin123'), full_name: 'Platform Admin', role: 'admin', status: 'active', company: null, phone: null, created_at: now },
       { id: uuidv4(), email: 'employer@reqruit.com', password_hash: hash('employer123'), full_name: 'Acme Corp HR', role: 'employer', status: 'active', company: 'Acme Corp', phone: null, created_at: now },
-      { id: uuidv4(), email: 'applicant@reqruit.com', password_hash: hash('applicant123'), full_name: 'Jane Doe', role: 'applicant', status: 'active', company: null, phone: '+254700000000', created_at: now },
+      { id: uuidv4(), email: 'applicant@reqruit.com', password_hash: hash('applicant123'), full_name: 'Jane Doe', role: 'applicant', status: 'active', company: null, phone: '+254700000000', applicant_code: 'RQ-DEMOJANE', created_at: now },
     ],
     jobs: [],
     applications: [],
     ai_analyses: [],
+    interviews: [],
+    notifications: [],
+    messages: [],
     activity_log: [],
   };
 }
@@ -66,11 +71,31 @@ function ensureDb() {
 
 function read() {
   ensureDb();
-  return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  if (!Array.isArray(db.interviews)) db.interviews = [];
+  if (!Array.isArray(db.notifications)) db.notifications = [];
+  if (!Array.isArray(db.messages)) db.messages = [];
+  let dirty = false;
+  (db.users || []).forEach((u) => {
+    if (u.role === 'applicant' && !u.applicant_code) {
+      u.applicant_code = derivedApplicantCode(u.id);
+      dirty = true;
+    }
+  });
+  if (dirty) write(db);
+  return db;
 }
 
 function write(db) {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+}
+
+function allocateLocalApplicantCode(db) {
+  for (let i = 0; i < 12; i += 1) {
+    const code = generateApplicantCode();
+    if (!db.users.some((u) => u.applicant_code === code)) return code;
+  }
+  return generateApplicantCode();
 }
 
 function mapUser(u) {
@@ -85,6 +110,8 @@ function mapUser(u) {
     status: rest.status || 'active',
     company: rest.company,
     phone: rest.phone,
+    applicantCode: rest.role === 'applicant' ? (rest.applicant_code || derivedApplicantCode(rest.id)) : null,
+    applicant_code: rest.role === 'applicant' ? (rest.applicant_code || derivedApplicantCode(rest.id)) : null,
     createdAt: rest.created_at,
     created_at: rest.created_at,
   };
@@ -109,6 +136,12 @@ function mapJob(j, users, appCounts) {
     experience_years: j.experience_years,
     applicationDeadline: j.application_deadline || null,
     application_deadline: j.application_deadline || null,
+    requirementProfile: j.requirement_profile || null,
+    requirement_profile: j.requirement_profile || null,
+    embeddingCache: j.embedding_cache || null,
+    embedding_cache: j.embedding_cache || null,
+    scoringWeights: j.scoring_weights || null,
+    scoring_weights: j.scoring_weights || null,
     status: j.status,
     employerId: j.employer_id,
     employer_id: j.employer_id,
@@ -159,6 +192,7 @@ function mapApplication(a, users, jobs, analyses) {
     jobTitle: job?.title || 'Unknown',
     applicantId: a.applicant_id,
     applicant_id: a.applicant_id,
+    applicantCode: applicant?.applicant_code || derivedApplicantCode(a.applicant_id),
     applicantName: applicant?.full_name || 'Unknown',
     applicantEmail: applicant?.email || '',
     status,
@@ -169,9 +203,23 @@ function mapApplication(a, users, jobs, analyses) {
     resume_url: a.resume_url,
     transcriptUrl: a.transcript_url,
     certificatesUrl: a.certificates_url,
-    aiScore: analysis?.overall_score ?? null,
+    candidateProfile: a.candidate_profile || null,
+    candidate_profile: a.candidate_profile || null,
+    supportingDocuments: a.supporting_documents || null,
+    supporting_documents: a.supporting_documents || null,
+    evidence: a.evidence || null,
+    embeddingCache: a.embedding_cache || null,
+    embedding_cache: a.embedding_cache || null,
+    requirementMatches: a.requirement_matches || null,
+    requirement_matches: a.requirement_matches || null,
+    scoreBreakdown: a.score_breakdown || null,
+    score_breakdown: a.score_breakdown || null,
+    analysisStatus: a.analysis_status || null,
+    analysis_status: a.analysis_status || null,
+    aiScore: a.score_breakdown?.overall_score ?? analysis?.overall_score ?? null,
     aiSummary: analysis?.ai_summary ?? null,
     appliedAt: a.applied_at,
+    createdAt: a.applied_at,
     updatedAt: a.updated_at,
     updated_at: a.updated_at,
     analysis: analysis ? {
@@ -183,6 +231,17 @@ function mapApplication(a, users, jobs, analyses) {
       weaknesses: analysis.weaknesses,
       recommendation: analysis.recommendation,
       summary: analysis.ai_summary,
+      documentsReviewed: analysis.skills_match?.documentsReviewed || analysis.documents_reviewed || analysis.analysis_audit?.documents?.analyzed || [],
+      documentsFailed: analysis.skills_match?.documentsFailed || analysis.documents_failed || analysis.analysis_audit?.documents?.failed || [],
+      semanticMatch: analysis.skills_match?.semanticMatch || null,
+      scoreBreakdown: analysis.score_breakdown || analysis.skills_match?.scoreBreakdown || a.score_breakdown || null,
+      matchLabel: analysis.score_breakdown?.match_label || analysis.skills_match?.scoreBreakdown?.match_label || a.score_breakdown?.match_label || null,
+      modelVersion: analysis.model_version || analysis.analysis_audit?.model || null,
+      analysisVersion: analysis.analysis_version || analysis.analysis_audit?.analysis_version || null,
+      scoringVersion: analysis.scoring_version || analysis.analysis_audit?.scoring_version || null,
+      embeddingModel: analysis.embedding_model || analysis.analysis_audit?.embedding_model || null,
+      analyzedAt: analysis.analyzed_at || analysis.analysis_audit?.timestamp || null,
+      audit: analysis.analysis_audit || null,
     } : null,
   };
 }
@@ -214,6 +273,7 @@ const localStore = {
       status: 'active',
       company: company || null,
       phone: null,
+      applicant_code: role === 'applicant' ? allocateLocalApplicantCode(db) : null,
       created_at: new Date().toISOString(),
     };
     db.users.push(user);
@@ -266,6 +326,10 @@ const localStore = {
     if (patch.status) job.status = patch.status;
     if (patch.title) job.title = patch.title;
     if (patch.applicationDeadline !== undefined) job.application_deadline = patch.applicationDeadline || null;
+    if (patch.requirementProfile !== undefined) job.requirement_profile = patch.requirementProfile;
+    if (patch.requiredSkills) job.required_skills = patch.requiredSkills;
+    if (patch.embeddingCache !== undefined) job.embedding_cache = patch.embeddingCache;
+    if (patch.scoringWeights !== undefined) job.scoring_weights = patch.scoringWeights;
     job.updated_at = new Date().toISOString();
     write(db);
     return this.getJob(id);
@@ -408,7 +472,7 @@ const localStore = {
       action: 'application_submitted',
       entity_type: 'application',
       entity_id: app.id,
-      metadata: { jobTitle: job?.title, applicantName: applicant?.full_name },
+      metadata: { jobTitle: job?.title, applicantCode: applicant?.applicant_code || derivedApplicantCode(applicantId) },
       created_at: now,
     });
     write(db);
@@ -433,11 +497,27 @@ const localStore = {
       action: 'status_updated',
       entity_type: 'application',
       entity_id: app.id,
-      metadata: { status: app.status, jobTitle: job?.title, applicantName: applicant?.full_name },
+      metadata: { status: app.status, jobTitle: job?.title, applicantCode: applicant?.applicant_code || derivedApplicantCode(app.applicant_id) },
       created_at: app.updated_at,
     });
     write(db);
     return mapApplication(app, db.users, db.jobs, db.ai_analyses);
+  },
+
+  async updateApplication(id, patch) {
+    const db = read();
+    const app = db.applications.find((a) => a.id === id);
+    if (!app) throw new Error('Application not found');
+    if (patch.candidateProfile !== undefined) app.candidate_profile = patch.candidateProfile;
+    if (patch.supportingDocuments !== undefined) app.supporting_documents = patch.supportingDocuments;
+    if (patch.evidence !== undefined) app.evidence = patch.evidence;
+    if (patch.embeddingCache !== undefined) app.embedding_cache = patch.embeddingCache;
+    if (patch.requirementMatches !== undefined) app.requirement_matches = patch.requirementMatches;
+    if (patch.scoreBreakdown !== undefined) app.score_breakdown = patch.scoreBreakdown;
+    if (patch.analysisStatus !== undefined) app.analysis_status = patch.analysisStatus;
+    app.updated_at = new Date().toISOString();
+    write(db);
+    return this.getApplication(id);
   },
 
   async saveAnalysis(analysis) {
@@ -448,15 +528,25 @@ const localStore = {
       application_id: analysis.application_id,
       job_id: analysis.job_id,
       overall_score: analysis.overall_score,
-      skills_match: analysis.skills_match,
+      skills_match: {
+        ...(analysis.skills_match || {}),
+        documentsReviewed: analysis.documents_reviewed || analysis.skills_match?.documentsReviewed || [],
+        documentsFailed: analysis.documents_failed || analysis.skills_match?.documentsFailed || [],
+        semanticMatch: analysis.semantic_match || analysis.skills_match?.semanticMatch || null,
+        scoreBreakdown: analysis.score_breakdown || null,
+      },
       education_match: analysis.education_match,
       experience_match: analysis.experience_match,
       ai_summary: analysis.ai_summary,
       strengths: analysis.strengths || [],
       weaknesses: analysis.weaknesses || [],
       recommendation: analysis.recommendation,
-      analyzed_at: new Date().toISOString(),
-      model_version: analysis.model_version || 'local',
+      analyzed_at: analysis.analyzed_at || analysis.analysis_audit?.timestamp || new Date().toISOString(),
+      model_version: analysis.model_version || analysis.analysis_audit?.model || 'local',
+      analysis_version: analysis.analysis_version || analysis.analysis_audit?.analysis_version || null,
+      scoring_version: analysis.scoring_version || analysis.analysis_audit?.scoring_version || null,
+      embedding_model: analysis.embedding_model || analysis.analysis_audit?.embedding_model || null,
+      analysis_audit: analysis.analysis_audit || null,
     };
     if (idx >= 0) db.ai_analyses[idx] = record;
     else db.ai_analyses.push(record);
@@ -499,10 +589,13 @@ const localStore = {
         const applicant = app ? db.users.find((u) => u.id === app.applicant_id) : null;
         return {
           applicationId: app?.id,
-          applicantName: log.metadata?.applicantName || applicant?.full_name || 'Unknown',
+          applicantId: app?.applicant_id,
+          applicantCode: log.metadata?.applicantCode || applicant?.applicant_code || derivedApplicantCode(app?.applicant_id),
+          applicantName: applicant?.full_name || 'Unknown',
           jobTitle: log.metadata?.jobTitle || job?.title || 'Unknown',
           stageLabel: app ? stageLabel(app.status) : 'Job Update',
           updatedAt: log.created_at,
+          createdAt: log.created_at,
         };
       });
   },
@@ -554,6 +647,8 @@ const localStore = {
       totalApplications: apps.length,
       pendingReview: pending,
       shortlisted,
+      hired: byStage.hired || 0,
+      rejected: byStage.rejected || 0,
       analyzed,
       shortlistRate,
       byStage,
@@ -572,6 +667,112 @@ const localStore = {
       else pipeline.submitted.push(mapApplication(a, db.users, db.jobs, db.ai_analyses));
     });
     return { pipeline };
+  },
+
+  async createNotification({ userId, type, title, body, link, meta }) {
+    if (!userId) return null;
+    const db = read();
+    const row = {
+      id: uuidv4(),
+      user_id: userId,
+      type: type || 'info',
+      title: title || 'Update',
+      body: body || '',
+      link: link || null,
+      read_at: null,
+      meta: meta || null,
+      created_at: new Date().toISOString(),
+    };
+    db.notifications.unshift(row);
+    write(db);
+    return mapNotification(row);
+  },
+
+  async listNotifications(userId, { unreadOnly = false } = {}) {
+    const db = read();
+    return db.notifications
+      .filter((n) => n.user_id === userId && (!unreadOnly || !n.read_at))
+      .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+      .map(mapNotification);
+  },
+
+  async markNotificationRead(id, userId) {
+    const db = read();
+    const row = db.notifications.find((n) => n.id === id && n.user_id === userId);
+    if (!row) throw new Error('Notification not found');
+    row.read_at = row.read_at || new Date().toISOString();
+    write(db);
+    return mapNotification(row);
+  },
+
+  async markAllNotificationsRead(userId) {
+    const db = read();
+    const now = new Date().toISOString();
+    db.notifications.forEach((n) => {
+      if (n.user_id === userId && !n.read_at) n.read_at = now;
+    });
+    write(db);
+    return this.listNotifications(userId);
+  },
+
+  async createInterview(fields) {
+    const db = read();
+    const row = {
+      id: uuidv4(),
+      ...fields,
+      status: fields.status || 'scheduled',
+      applicant_rsvp: fields.applicant_rsvp || 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    db.interviews.push(row);
+    write(db);
+    return row;
+  },
+
+  async updateInterview(id, patch) {
+    const db = read();
+    const row = db.interviews.find((i) => i.id === id);
+    if (!row) throw new Error('Interview not found');
+    Object.assign(row, patch, { updated_at: new Date().toISOString() });
+    write(db);
+    return row;
+  },
+
+  async getInterview(id) {
+    const db = read();
+    return db.interviews.find((i) => i.id === id) || null;
+  },
+
+  async listInterviews({ employerId, applicantId, applicationId } = {}) {
+    const db = read();
+    return db.interviews.filter((row) => {
+      if (employerId && row.employer_id !== employerId) return false;
+      if (applicantId && row.applicant_id !== applicantId) return false;
+      if (applicationId && row.application_id !== applicationId) return false;
+      return true;
+    }).sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
+  },
+
+  async listMessages(applicationId) {
+    const db = read();
+    return db.messages
+      .filter((m) => m.application_id === applicationId)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  },
+
+  async createMessage({ applicationId, senderId, body }) {
+    const db = read();
+    const row = {
+      id: uuidv4(),
+      application_id: applicationId,
+      sender_id: senderId,
+      body,
+      created_at: new Date().toISOString(),
+    };
+    db.messages.push(row);
+    write(db);
+    return row;
   },
 };
 

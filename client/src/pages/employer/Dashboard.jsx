@@ -6,17 +6,24 @@ import Loader from '../../components/Loader.jsx';
 import CandidateModal from '../../components/CandidateModal.jsx';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
-import { formatDate } from '../../utils/format.js';
+import { formatDate, formatRecordDate, formatDateTime, applicantLabel } from '../../utils/format.js';
 
 export default function EmployerDashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
+  const [upcoming, setUpcoming] = useState([]);
 
   async function load() {
-    const [stats, jobs, activity] = await Promise.all([api.employerStats(), api.getMyJobs(), api.getActivity()]);
+    const [stats, jobs, activity, interviews] = await Promise.all([
+      api.employerStats(),
+      api.getMyJobs(),
+      api.getActivity(),
+      api.getInterviews().catch(() => []),
+    ]);
     setData({ stats, jobs, activity });
+    setUpcoming((interviews || []).filter((row) => row.status === 'scheduled').slice(0, 4));
   }
 
   useEffect(() => {
@@ -42,15 +49,16 @@ export default function EmployerDashboard() {
             <StatCard label="Applications" value={data.stats.totalApplications} href="/employer/candidates" />
             <StatCard label="Pending Review" value={data.stats.pendingReview} href="/employer/rankings" accent="amber" />
             <StatCard label="Shortlisted" value={data.stats.shortlisted} href="/employer/shortlist" accent="rose" />
+            <StatCard label="Interviews" value={data.stats.byStage?.interview_scheduled || 0} href="/employer/interviews" accent="violet" />
           </div>
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
             <section className="rounded-2xl bg-white p-5 shadow-card">
               <h3 className="mb-4 font-bold">Recent Activity</h3>
               <div className="space-y-2">
                 {(data.activity || []).slice(0, 8).map((a) => (
-                  <button key={a.id} onClick={() => setSelected(a.id)} className="block w-full rounded-xl px-3 py-2 text-left hover:bg-slate-50">
-                    <div className="font-semibold">{a.applicantName || a.message}</div>
-                    <div className="text-xs text-ink-500">{a.jobTitle} · {formatDate(a.createdAt)}</div>
+                  <button key={a.applicationId || a.id} onClick={() => setSelected(a.applicationId || a.id)} className="block w-full rounded-xl px-3 py-2 text-left hover:bg-slate-50">
+                    <div className="font-semibold">{applicantLabel(a) || a.message}</div>
+                    <div className="text-xs text-ink-500">{a.jobTitle} · {formatRecordDate(a)}</div>
                   </button>
                 ))}
                 {!data.activity?.length && <p className="text-sm text-ink-500">No recent activity.</p>}
@@ -58,27 +66,42 @@ export default function EmployerDashboard() {
             </section>
             <section className="rounded-2xl bg-white p-5 shadow-card">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-bold">Your Jobs</h3>
-                <Link to="/employer/jobs" className="text-sm font-semibold text-brand-600">View all</Link>
+                <h3 className="font-bold">Upcoming interviews</h3>
+                <Link to="/employer/interviews" className="text-sm font-semibold text-brand-600">View all</Link>
               </div>
               <div className="space-y-2">
-                {data.jobs.map((j) => (
-                  <div key={j.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-3">
-                    <div>
-                      <div className="font-semibold">{j.title}</div>
-                      <div className="text-xs text-ink-500">
-                        {j.location || 'Remote'}
-                        {j.applicationDeadline ? ` · Apply by ${formatDate(j.applicationDeadline)}` : ''}
-                        {j.acceptingApplications === false ? ' · Closed' : ''}
-                      </div>
-                    </div>
-                    <Link to={`/employer/jobs`} className="text-sm font-semibold text-brand-600">Manage</Link>
-                  </div>
+                {upcoming.map((row) => (
+                  <Link key={row.id} to="/employer/interviews" className="block rounded-xl px-3 py-2 hover:bg-slate-50">
+                    <div className="font-mono font-semibold">{applicantLabel(row)}</div>
+                    <div className="text-xs text-ink-500">{row.jobTitle} · {formatDateTime(row.startsAt)} · {row.mode}</div>
+                  </Link>
                 ))}
-                {!data.jobs.length && <p className="text-sm text-ink-500">No jobs yet. Post your first role.</p>}
+                {!upcoming.length && <p className="text-sm text-ink-500">No interviews booked. Shortlist a candidate, then schedule.</p>}
               </div>
             </section>
           </div>
+          <section className="mt-6 rounded-2xl bg-white p-5 shadow-card">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-bold">Your Jobs</h3>
+              <Link to="/employer/jobs" className="text-sm font-semibold text-brand-600">View all</Link>
+            </div>
+            <div className="space-y-2">
+              {data.jobs.map((j) => (
+                <div key={j.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-3">
+                  <div>
+                    <div className="font-semibold">{j.title}</div>
+                    <div className="text-xs text-ink-500">
+                      {j.location || 'Remote'}
+                      {j.applicationDeadline ? ` · Apply by ${formatDate(j.applicationDeadline)}` : ''}
+                      {j.acceptingApplications === false ? ' · Closed' : ''}
+                    </div>
+                  </div>
+                  <Link to="/employer/jobs" className="text-sm font-semibold text-brand-600">Manage</Link>
+                </div>
+              ))}
+              {!data.jobs.length && <p className="text-sm text-ink-500">No jobs yet. Post your first role.</p>}
+            </div>
+          </section>
         </>
       )}
       {selected && <CandidateModal applicationId={selected} onClose={() => setSelected(null)} onUpdated={load} />}

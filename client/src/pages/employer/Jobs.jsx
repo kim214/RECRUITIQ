@@ -150,6 +150,18 @@ export default function EmployerJobs() {
                       ))}
                     </div>
                   )}
+                  {j.requirementProfile && (
+                    <div className="mt-4 space-y-2 rounded-xl bg-slate-50 p-3 text-xs text-ink-600">
+                      <p className="font-semibold text-ink-800">Structured requirements</p>
+                      {!!j.requirementProfile.required_skills?.length && <p><span className="font-semibold">Required:</span> {j.requirementProfile.required_skills.join(', ')}</p>}
+                      {!!j.requirementProfile.preferred_skills?.length && <p><span className="font-semibold">Preferred:</span> {j.requirementProfile.preferred_skills.join(', ')}</p>}
+                      {!!j.requirementProfile.education_requirements?.length && <p><span className="font-semibold">Education:</span> {j.requirementProfile.education_requirements.join(', ')}</p>}
+                      {!!j.requirementProfile.experience_requirements?.length && <p><span className="font-semibold">Experience:</span> {j.requirementProfile.experience_requirements.join(', ')}</p>}
+                      {!!j.requirementProfile.certifications?.length && <p><span className="font-semibold">Certifications:</span> {j.requirementProfile.certifications.join(', ')}</p>}
+                      {!!j.requirementProfile.responsibilities?.length && <p><span className="font-semibold">Responsibilities:</span> {j.requirementProfile.responsibilities.join(', ')}</p>}
+                      {!!j.requirementProfile.other_requirements?.length && <p><span className="font-semibold">Other:</span> {j.requirementProfile.other_requirements.join(', ')}</p>}
+                    </div>
+                  )}
                   <div className="mt-4 flex flex-wrap gap-3">
                     <Link to={`/employer/candidates?job=${j.id}`} className="font-semibold text-brand-600">Candidates</Link>
                     <Link to={`/employer/rankings?job=${j.id}`} className="font-semibold text-brand-600">AI Rankings</Link>

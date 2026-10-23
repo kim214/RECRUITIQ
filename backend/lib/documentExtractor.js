@@ -1,13 +1,13 @@
 /**
- * Fetches and extracts text from applicant uploads (resume, transcript, certificates).
+ * Fetches applicant uploads, then runs the document pipeline (validate → extract → normalize → chunk).
  */
 const fs = require('fs');
 const path = require('path');
 const { getStorageClient, BUCKET_NAME } = require('./storage');
+const { processDocument, assembleLlmText, MAX_FILE_BYTES } = require('./documentPipeline');
+const { resolveLocalUploadPath, supabaseObjectPath } = require('./documentUrlPolicy');
 
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-const FETCH_TIMEOUT_MS = 20000;
-const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 function extensionFromUrl(url) {
   try {
@@ -18,34 +18,12 @@ function extensionFromUrl(url) {
   }
 }
 
-function resolveFetchUrl(url, options = {}) {
-  if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  if (url.startsWith('/')) {
-    const base = options.apiOrigin || process.env.PUBLIC_APP_URL || 'http://localhost:3001';
-    return `${base.replace(/\/$/, '')}${url}`;
-  }
-  return url;
-}
-
-function supabasePathFromPublicUrl(url) {
-  const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  return decodeURIComponent(url.slice(idx + marker.length));
-}
-
-async function fetchRemoteBuffer(url) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+function filenameFromUrl(url) {
   try {
-    const res = await fetch(url, { signal: controller.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > MAX_FILE_BYTES) throw new Error('File too large to parse');
-    return buf;
-  } finally {
-    clearTimeout(timer);
+    const clean = decodeURIComponent(String(url).split('?')[0].split('#')[0]);
+    return path.basename(clean) || `document${extensionFromUrl(url)}`;
+  } catch {
+    return 'document';
   }
 }
 
@@ -59,68 +37,22 @@ async function downloadSupabaseObject(storagePath) {
   return buf;
 }
 
-async function loadDocumentBuffer(url, options = {}) {
+async function loadDocumentBuffer(url) {
   if (!url) return null;
 
-  if (url.startsWith('/uploads/')) {
-    const rel = url.replace(/^\/uploads\/?/, '');
-    const filePath = path.join(UPLOAD_DIR, rel);
-    if (fs.existsSync(filePath)) {
-      const buf = fs.readFileSync(filePath);
-      if (buf.length > MAX_FILE_BYTES) throw new Error('File too large to parse');
-      return buf;
-    }
+  const filePath = resolveLocalUploadPath(url, UPLOAD_DIR);
+  if (filePath && fs.existsSync(filePath)) {
+    const buf = fs.readFileSync(filePath);
+    if (buf.length > MAX_FILE_BYTES) throw new Error('File too large to parse');
+    return buf;
   }
 
-  const storagePath = supabasePathFromPublicUrl(url);
+  const storagePath = supabaseObjectPath(url);
   if (storagePath && getStorageClient()) {
-    try {
-      return await downloadSupabaseObject(storagePath);
-    } catch {
-      /* fall through to HTTP fetch */
-    }
+    return downloadSupabaseObject(storagePath);
   }
 
-  const fetchUrl = resolveFetchUrl(url, options);
-  return fetchRemoteBuffer(fetchUrl);
-}
-
-async function extractPdfText(buffer) {
-  const pdfParse = require('pdf-parse');
-  const result = await pdfParse(buffer);
-  return (result.text || '').replace(/\s+/g, ' ').trim();
-}
-
-async function extractDocxText(buffer) {
-  const mammoth = require('mammoth');
-  const result = await mammoth.extractRawText({ buffer });
-  return (result.value || '').replace(/\s+/g, ' ').trim();
-}
-
-async function extractDocText(buffer) {
-  const WordExtractor = require('word-extractor');
-  const extractor = new WordExtractor();
-  const doc = await extractor.extract(buffer);
-  const body = await doc.getBody();
-  return (body || '').replace(/\s+/g, ' ').trim();
-}
-
-async function extractTextFromBuffer(buffer, ext) {
-  if (!buffer?.length) return '';
-
-  if (ext === '.pdf') return extractPdfText(buffer);
-  if (ext === '.docx') return extractDocxText(buffer);
-  if (ext === '.doc') return extractDocText(buffer);
-  if (['.txt', '.md', '.csv'].includes(ext)) {
-    return buffer.toString('utf8').replace(/\s+/g, ' ').trim();
-  }
-
-  // Images — no OCR in serverless; caller records unsupported type
-  if (['.png', '.jpg', '.jpeg'].includes(ext)) {
-    throw new Error('Image files cannot be text-parsed automatically');
-  }
-
-  throw new Error(`Unsupported file type: ${ext || 'unknown'}`);
+  throw new Error('Unsupported document URL');
 }
 
 function listApplicationDocuments(application) {
@@ -138,40 +70,92 @@ function listApplicationDocuments(application) {
 }
 
 async function extractSingleDocument(doc, options) {
-  const ext = extensionFromUrl(doc.url);
+  const filename = filenameFromUrl(doc.url);
   try {
     const buffer = await loadDocumentBuffer(doc.url, options);
     if (!buffer?.length) {
-      return { ...doc, ok: false, chars: 0, text: '', error: 'Empty file' };
+      return {
+        ...doc,
+        ok: false,
+        chars: 0,
+        text: '',
+        llmText: '',
+        chunks: [],
+        code: 'empty_document',
+        error: 'Empty file',
+      };
     }
-    const text = await extractTextFromBuffer(buffer, ext);
-    if (!text || text.length < 15) {
-      return { ...doc, ok: false, chars: 0, text: '', error: 'No readable text found in document' };
-    }
-    return { ...doc, ok: true, chars: text.length, text, error: null };
+    const processed = await processDocument({
+      buffer,
+      filename,
+      label: doc.label,
+    });
+    return { ...doc, ...processed };
   } catch (err) {
-    return { ...doc, ok: false, chars: 0, text: '', error: err.message || 'Failed to read document' };
+    const timeout = /timed out|timeout|abort/i.test(err.message || '') || err.name === 'AbortError';
+    return {
+      ...doc,
+      ok: false,
+      chars: 0,
+      text: '',
+      llmText: '',
+      chunks: [],
+      code: timeout ? 'timeout' : 'unreadable',
+      error: timeout ? 'Document download timed out' : (err.message || 'Failed to read document'),
+    };
   }
 }
 
 async function extractApplicationDocuments(application, options = {}) {
   const documents = listApplicationDocuments(application);
   if (!documents.length) {
-    return { combinedText: '', sources: [], parsedCount: 0, failedCount: 0 };
+    return {
+      combinedText: '',
+      llmText: '',
+      sources: [],
+      parsedCount: 0,
+      failedCount: 0,
+      sections: [],
+      chunks: [],
+    };
   }
 
   const sources = await Promise.all(documents.map((d) => extractSingleDocument(d, options)));
   const parsed = sources.filter((s) => s.ok && s.text);
-  const combinedText = parsed
+  const sections = parsed.map((s) => ({
+    label: s.label,
+    text: s.text,
+    llmText: s.llmText || s.text,
+    chunks: s.chunks || [],
+    method: s.method,
+    scanned: !!s.scanned,
+    truncated: !!s.truncated,
+  }));
+  const combinedText = sections
     .map((s) => `--- ${s.label} ---\n${s.text}`)
     .join('\n\n');
+  const llmText = assembleLlmText(sections);
+  const chunks = sections.flatMap((s) => (s.chunks || []).map((text) => ({ label: s.label, text })));
 
   return {
     combinedText,
-    sources: sources.map(({ label, url, ok, chars, error }) => ({ label, url, ok, chars, error })),
+    llmText,
+    sources: sources.map((s) => ({
+      label: s.label,
+      url: s.url,
+      ok: s.ok,
+      chars: s.chars,
+      error: s.error,
+      code: s.code || null,
+      method: s.method || null,
+      scanned: !!s.scanned,
+      truncated: !!s.truncated,
+      type: s.detected?.type || null,
+    })),
     parsedCount: parsed.length,
     failedCount: sources.length - parsed.length,
-    sections: parsed.map((s) => ({ label: s.label, text: s.text })),
+    sections,
+    chunks,
   };
 }
 
@@ -179,5 +163,5 @@ module.exports = {
   extractApplicationDocuments,
   listApplicationDocuments,
   loadDocumentBuffer,
-  extractTextFromBuffer,
+  extractSingleDocument,
 };

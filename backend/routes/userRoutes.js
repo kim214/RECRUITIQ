@@ -34,8 +34,8 @@ router.post('/', requireRole('admin'), async (req, res) => {
     if (!ROLES.includes(role)) {
       return res.status(400).json({ message: 'Role must be admin, employer, or applicant' });
     }
-    if (password && password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    if (password && password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
     const temporaryPassword = password || generatePassword();
     const db = getDb();

@@ -57,10 +57,10 @@ export default function AdminDashboard() {
           </div>
 
           <div className={`mt-6 rounded-2xl border p-4 ${llm.available ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
-            <p className="font-semibold">AI ranking {llm.available ? 'connected' : 'unavailable'}</p>
+            <p className="font-semibold">GCP AI {llm.available ? 'connected' : 'unavailable'}</p>
             <p className="text-sm opacity-80">
               {llm.available
-                ? `Model ${llm.model || llm.currentModel || 'Ollama'} is reachable for candidate ranking.`
+                ? `Chat ${llm.model || 'Ollama'} · embeddings ${data.ai?.embeddings?.available ? (data.ai.embeddings.model || 'on') : 'off'} · OCR ${data.ai?.ocr?.available ? 'on' : (data.ai?.ocr?.pending ? 'waiting on VM sidecar' : 'not configured')}`
                 : 'The ranking service is offline. Employers can still post jobs and collect applications.'}
             </p>
           </div>

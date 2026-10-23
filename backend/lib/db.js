@@ -9,6 +9,10 @@ function useSupabase() {
 }
 
 async function initDb() {
+  // Vercel's filesystem is read-only, so the local JSON store cannot work there.
+  if (process.env.VERCEL && !useSupabase()) {
+    throw new Error('Database not configured: set SUPABASE_URL and SUPABASE_SERVICE_KEY in the Vercel project environment variables');
+  }
   if (useSupabase()) {
     try {
       const supabaseStore = require('./supabaseStore');
@@ -16,6 +20,7 @@ async function initDb() {
       store = supabaseStore;
       console.log('Database: Supabase connected');
     } catch (err) {
+      if (process.env.VERCEL) throw new Error(`Supabase init failed: ${err.message}`);
       console.warn('Supabase init failed, using local store:', err.message);
       store = localStore;
       console.log('Database: Local JSON store (backend/data/db.json)');

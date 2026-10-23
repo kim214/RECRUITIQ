@@ -12,11 +12,15 @@ import EmployerJobs from './pages/employer/Jobs.jsx';
 import CreateJob from './pages/employer/CreateJob.jsx';
 import Candidates from './pages/employer/Candidates.jsx';
 import Shortlist from './pages/employer/Shortlist.jsx';
+import EmployerInterviews from './pages/employer/Interviews.jsx';
+import EmployerNotifications from './pages/employer/Notifications.jsx';
 import Rankings from './pages/employer/Rankings.jsx';
 import Reports from './pages/employer/Reports.jsx';
 import ApplicantDashboard from './pages/applicant/Dashboard.jsx';
 import ApplicantJobs from './pages/applicant/Jobs.jsx';
 import Applications from './pages/applicant/Applications.jsx';
+import ApplicantInterviews from './pages/applicant/Interviews.jsx';
+import ApplicantNotifications from './pages/applicant/Notifications.jsx';
 import Profile from './pages/applicant/Profile.jsx';
 import AdminDashboard from './pages/admin/Dashboard.jsx';
 import AdminUsers from './pages/admin/Users.jsx';
@@ -41,12 +45,16 @@ export default function App() {
           <Route path="/employer/jobs/new" element={<ProtectedRoute roles={['employer']}><CreateJob /></ProtectedRoute>} />
           <Route path="/employer/candidates" element={<ProtectedRoute roles={['employer']}><Candidates /></ProtectedRoute>} />
           <Route path="/employer/shortlist" element={<ProtectedRoute roles={['employer']}><Shortlist /></ProtectedRoute>} />
+          <Route path="/employer/interviews" element={<ProtectedRoute roles={['employer']}><EmployerInterviews /></ProtectedRoute>} />
+          <Route path="/employer/notifications" element={<ProtectedRoute roles={['employer']}><EmployerNotifications /></ProtectedRoute>} />
           <Route path="/employer/rankings" element={<ProtectedRoute roles={['employer']}><Rankings /></ProtectedRoute>} />
           <Route path="/employer/reports" element={<ProtectedRoute roles={['employer']}><Reports /></ProtectedRoute>} />
 
           <Route path="/applicant" element={<ProtectedRoute roles={['applicant']}><ApplicantDashboard /></ProtectedRoute>} />
           <Route path="/applicant/jobs" element={<ProtectedRoute roles={['applicant']}><ApplicantJobs /></ProtectedRoute>} />
           <Route path="/applicant/applications" element={<ProtectedRoute roles={['applicant']}><Applications /></ProtectedRoute>} />
+          <Route path="/applicant/interviews" element={<ProtectedRoute roles={['applicant']}><ApplicantInterviews /></ProtectedRoute>} />
+          <Route path="/applicant/notifications" element={<ProtectedRoute roles={['applicant']}><ApplicantNotifications /></ProtectedRoute>} />
           <Route path="/applicant/profile" element={<ProtectedRoute roles={['applicant']}><Profile /></ProtectedRoute>} />
 
           <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />

@@ -16,8 +16,8 @@ export default function Reports() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Applications" value={stats.totalApplications} />
           <StatCard label="Shortlisted" value={stats.shortlisted} accent="rose" />
-          <StatCard label="Hired" value={stats.hired} accent="teal" />
-          <StatCard label="Rejected" value={stats.rejected} accent="amber" />
+          <StatCard label="Hired" value={stats.hired ?? stats.byStage?.hired ?? 0} accent="teal" />
+          <StatCard label="Rejected" value={stats.rejected ?? stats.byStage?.rejected ?? 0} accent="amber" />
         </div>
       )}
     </PortalLayout>

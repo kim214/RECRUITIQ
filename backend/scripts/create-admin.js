@@ -20,8 +20,8 @@ if (!emailRaw || !password) {
   console.error('Usage: node scripts/create-admin.js <email> <password> [full name]');
   process.exit(1);
 }
-if (password.length < 6) {
-  console.error('Password must be at least 6 characters.');
+if (password.length < 8) {
+  console.error('Password must be at least 8 characters.');
   process.exit(1);
 }
 

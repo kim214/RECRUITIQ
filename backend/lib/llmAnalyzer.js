@@ -1,18 +1,20 @@
 /**
- * @deprecated Use ollamaAnalyzer.js — kept for backward-compatible status exports.
+ * @deprecated Use lib/ai/aiService.js — kept for backward-compatible status exports.
  */
-const { checkOllamaHealth, isOllamaConfigured, DEFAULT_MODEL } = require('./ollamaAnalyzer');
+const aiService = require('./ai/aiService');
 
 function isLlmAvailable() {
-  return isOllamaConfigured();
+  return aiService.isConfigured();
 }
 
 async function getActiveProviderInfo() {
-  return checkOllamaHealth();
+  return aiService.healthCheck();
 }
 
 module.exports = {
   isLlmAvailable,
   getActiveProviderInfo,
-  DEFAULT_MODEL,
+  get DEFAULT_MODEL() {
+    return aiService.getConfig().model;
+  },
 };

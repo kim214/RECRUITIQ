@@ -10,6 +10,7 @@ const {
   friendlyUploadError,
   isBucketMissingError,
 } = require('../lib/storage');
+const { validateDocumentBuffer } = require('../lib/documentPipeline');
 
 const router = express.Router();
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
@@ -82,23 +83,76 @@ const diskStorage = multer.diskStorage({
 
 const memoryStorage = multer.memoryStorage();
 
+const ALLOWED_EXTS = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg'];
+
 const upload = multer({
   storage: (process.env.VERCEL || useSupabaseStorage) ? memoryStorage : diskStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.includes(ext)) cb(null, true);
-    else cb(new Error('Only PDF, DOC, DOCX, PNG, JPG files allowed'));
+    if (ALLOWED_EXTS.includes(ext)) cb(null, true);
+    else cb(new Error('Only PDF, DOC, DOCX, TXT, PNG, JPG files allowed'));
   },
 });
 
-router.post('/', requireRole('applicant'), upload.fields([
-  { name: 'resume', maxCount: 1 },
-  { name: 'transcript', maxCount: 1 },
-  { name: 'certificates', maxCount: 5 },
-]), async (req, res) => {
+function collectedFiles(req) {
+  return [
+    ...(req.files?.resume || []),
+    ...(req.files?.transcript || []),
+    ...(req.files?.certificates || []),
+  ];
+}
+
+function fileBuffer(file) {
+  if (file.buffer?.length) return file.buffer;
+  if (file.path && fs.existsSync(file.path)) return fs.readFileSync(file.path);
+  return Buffer.alloc(0);
+}
+
+function cleanupLocalFiles(req) {
+  for (const file of collectedFiles(req)) {
+    if (file.path && fs.existsSync(file.path)) {
+      try { fs.unlinkSync(file.path); } catch { /* ignore */ }
+    }
+  }
+}
+
+function validateUploadedFiles(req) {
+  for (const file of collectedFiles(req)) {
+    const result = validateDocumentBuffer(fileBuffer(file), {
+      filename: file.originalname,
+      mimetype: file.mimetype,
+    });
+    if (!result.ok) {
+      const err = new Error(result.error || 'Invalid document');
+      err.status = 400;
+      throw err;
+    }
+  }
+}
+
+function runMulter(req, res) {
+  return new Promise((resolve, reject) => {
+    upload.fields([
+      { name: 'resume', maxCount: 1 },
+      { name: 'transcript', maxCount: 1 },
+      { name: 'certificates', maxCount: 5 },
+    ])(req, res, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+router.post('/', requireRole('applicant'), async (req, res) => {
   try {
+    await runMulter(req, res);
+    try {
+      validateUploadedFiles(req);
+    } catch (err) {
+      cleanupLocalFiles(req);
+      return res.status(400).json({ message: err.message });
+    }
     const urls = {};
 
     if (process.env.VERCEL || useSupabaseStorage) {
@@ -129,7 +183,12 @@ router.post('/', requireRole('applicant'), upload.fields([
 
     res.json(urls);
   } catch (err) {
-    res.status(500).json({ message: friendlyUploadError(err) });
+    cleanupLocalFiles(req);
+    const multerBad = err.code === 'LIMIT_FILE_SIZE'
+      || /only pdf|file too large|unexpected field/i.test(err.message || '');
+    res.status(err.status || (multerBad ? 400 : 500)).json({
+      message: err.code === 'LIMIT_FILE_SIZE' ? 'File is larger than 10MB' : friendlyUploadError(err),
+    });
   }
 });
 
